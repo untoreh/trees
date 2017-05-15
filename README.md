@@ -1,2 +1,7 @@
 # trees
-An ostree repo on git, only the last commit is retained at any given time to not hammer github.
+Delta packages based on ostree repos (pine,trub).
+
+The deltas are built following the base image revisions.
+
+##### TODO
+- cross-version package deltas (not urgent)
