@@ -20,5 +20,5 @@ apk add --update-cache  \
  ca-certificates  \
  ostree
 
-source ./functions.sh
-source ./glib.sh
+source functions.sh
+./glib.sh

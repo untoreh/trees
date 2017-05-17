@@ -1,6 +1,6 @@
 #!/bin/bash
 
-shopt -s expand_aliases
+shopt -s expand_aliases &>/dev/null
 cn="\033[1;32;40m"
 cf="\033[0m"
 printc() {

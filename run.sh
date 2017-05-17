@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PKG=$1
-source functions.sh &>/dev/null
+source functions.sh
 
 ## sanity
 if [ ! $PKG ]; then
