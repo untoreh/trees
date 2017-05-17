@@ -11,13 +11,13 @@ env:
 script:
 - docker exec ct ./run.sh $PKG
 - |
-if [ -f file.up ]; then
-  GIT_REMOTE=$(git remote show origin | grep -i "push.*url" | \
-    sed -r 's~.*push.*?:[ \s]+(.*?://)(.*)$~\1'$GIT_USER:$GIT_TOKEN'@\2~i')
-  git tag -d $TRAVIS_TAG
-  git push --delete $GIT_REMOTE $TRAVIS_TAG
-  travis cancel $TRAVIS_BUILD_NUMBER --no-interactive -t $TRAVIS_TOKEN
-fi
+  if [ -f file.up ]; then
+    GIT_REMOTE=$(git remote show origin | grep -i "push.*url" | \
+      sed -r 's~.*push.*?:[ \s]+(.*?://)(.*)$~\1'$GIT_USER:$GIT_TOKEN'@\2~i')
+    git tag -d $TRAVIS_TAG
+    git push --delete $GIT_REMOTE $TRAVIS_TAG
+    travis cancel $TRAVIS_BUILD_NUMBER --no-interactive -t $TRAVIS_TOKEN
+  fi
 deploy:
   provider: releases
   api_key:
@@ -25,8 +25,8 @@ deploy:
   skip_cleanup: true
   file_glob: true
   file:
-  - "${pkg}.tar"
-  - "${pkg}.sum"
+  - "${PKG}.tar"
+  - "${PKG}.sum"
   on:
     tags: true
 
