@@ -6,7 +6,6 @@ rem_repo="untoreh/trees"
 repo_path=$(./fetch-ubu-tree.sh | tail -1)
 ref="trunk"
 pkg="hhvm"
-out="out"
 
 ## checkout the base
 ostree checkout --repo=${repo_path} -H --user-mode ${ref} ${pkg}
@@ -38,10 +37,8 @@ rev=$(ostree --repo=${repo_path} commit -s "$(date)-${pkg}-build"  \
 ## create delta of app branch
 mkdir -p ${out}
 ostree --repo=${repo_path} static-delta generate --from=${ref} ${pkg}  \
- --inline --min-fallback-size 0 --filename=${out}/${rev}
+ --inline --min-fallback-size 0 --filename=${rev}
 
 ## checksum and compress
-cd ${out}
 ostree checksum ${pkg} > ${pkg}.sum
 tar cvf ${pkg}.tar ${rev}
-cd -
