@@ -3,7 +3,7 @@
 source functions.sh
 
 rem_repo="untoreh/trees"
-repo_path=$(./fetch-alp-tree.sh)
+repo_path=$(./fetch-alp-tree.sh | tail -1)
 repo_local="${PWD}/lrepo"
 ref="trunk"
 pkg="etcd"

@@ -3,22 +3,20 @@
 source functions.sh
 
 rem_repo="untoreh/trees"
-repo_path=$(./fetch-ubu-tree.sh)
+repo_path=$(./fetch-ubu-tree.sh | tail -1)
 ref="trunk"
 pkg="hhvm"
 
 ## checkout the base
-ostree checkout --repo=${repo_path} -H ${ref} ${ref}
+ostree checkout --repo=${repo_path} -H --user-mode ${ref} ${pkg}
 
-## build app tree
-prepare_rootfs ${pkg}
-apkc ${pkg} add ${pkg}
-## get the built dir checksum
+## package routines
+chroot 
+
 new_csum=$(ostree checksum ${pkg})
 ## get the latest app checksum from remote
 old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
-#old_csum=$(ostree --repo=${repo_local} ls etcd -dC \
-# | grep -Eo " ([^ ]*) /" | sed -r 's/ | \///g')
+
 ## end if unchanged
 if [ "$new_csum" = "$old_csum" ] ; then
     printc "${pkg} already up to update."
