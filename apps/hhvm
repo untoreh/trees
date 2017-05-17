@@ -6,10 +6,13 @@ rem_repo="untoreh/trees"
 repo_path=$(./fetch-ubu-tree.sh)
 repo_local="${PWD}/lrepo"
 ref="trunk"
-pkg="etcd"
+pkg="hhvm"
 
 ## copy repo to local filesystem to allow checkout through hardlinks
 cp -a $repo_path $repo_local
+
+## misc
+install_tools "debootstrap"
 
 ## build app tree
 prepare_rootfs ${pkg}
