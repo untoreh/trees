@@ -1,5 +1,6 @@
 #!/bin/bash
 
+shopt -s expand_aliases
 cn="\033[1;32;40m"
 cf="\033[0m"
 printc() {
@@ -57,6 +58,28 @@ mount_image() {
         mkdir -p $tgt/$mp
         mount -o nouuid $p $tgt/$mp
     done
+}
+
+## $1 rootfs
+mount_hw() {
+    rootfs=$1
+    mkdir -p $rootfs
+    cd $rootfs
+    mkdir -p dev proc sys
+    mount --bind /dev dev
+    mount --bind /proc proc
+    mount --bind /sys sys
+    cd -
+}
+
+## $1 rootfs
+umount_hw() {
+    rootfs=$1
+    cd $rootfs || return 1
+    umount dev
+    umount proc
+    umount sys
+    cd -
 }
 
 ## $@ apk args
