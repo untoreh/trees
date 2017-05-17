@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PKG=$1
-source functions.sh
+source functions.sh &>/dev/null
 
 ## sanity
 if [ ! $PKG ]; then
@@ -11,7 +11,7 @@ fi
 
 ## prepare
 printc "preparing..."
-./prepare.sh
+bash prepare.sh
 
 ## build app
-./apps/$PKG
+bash apps/$PKG
