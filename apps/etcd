@@ -1,0 +1,39 @@
+#!/bin/bash
+
+source functions.sh
+
+rem_repo="untoreh/trees"
+repo_path=$(./fetch-alp-tree.sh)
+repo_local="${PWD}/lrepo"
+ref="trunk"
+pkg="etcd"
+
+## copy repo to local filesystem to allow checkout through hardlinks
+cp -a $repo_path $repo_local
+
+## build app tree
+prepare_rootfs ${pkg}
+apkc ${pkg} add ${pkg}
+## get the built dir checksum
+new_csum=$(ostree checksum ${pkg})
+## get the latest app checksum from remote
+old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
+#old_csum=$(ostree --repo=${repo_local} ls etcd -dC \
+# | grep -Eo " ([^ ]*) /" | sed -r 's/ | \///g')
+## end if unchanged
+if [ "$new_csum" = "$old_csum" ] ; then
+    printc "${pkg} already up to update."
+    exit
+fi
+## commit tree to app branch
+wrap_rootfs ${pkg}
+rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build"  \
+ --skip-if-unchanged -b ${pkg} ${pkg})
+
+## create delta of app branch
+ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg}  \
+ --inline --min-fallback-size 0 --filename=${rev}
+
+## checksum and compress
+ostree checksum ${pkg} > ${pkg}.sum
+tar cvf delta-${pkg}.tar ${rev}
