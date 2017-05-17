@@ -9,9 +9,5 @@ if [ ! $PKG ]; then
     exit 1
 fi
 
-## prepare
-printc "preparing..."
-./prepare.sh
-
 ## build app
 ./apps/$PKG

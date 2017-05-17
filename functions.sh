@@ -154,6 +154,20 @@ compare_csums() {
     fi
 }
 
+install_glib() {
+    mount -o remount,ro /proc &>/dev/null
+    ## GLIB
+    GLIB_VERSION=`last_version sgerrand/alpine-pkg-glibc`
+    wget -q -O $1/etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub
+    wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/$GLIB_VERSION/glibc-$GLIB_VERSION.apk
+    if [ -n "$1" ]; then
+        apk --root $1 add glibc-$GLIB_VERSION.apk
+    else
+        apk add glibc-$GLIB_VERSION.apk
+    fi
+    rm glibc-$GLIB_VERSION.apk
+    mount -o remount,rw /proc &>/dev/null
+}
 ## routing to add packages over existing tree
 ## checkout the trunk using hardlinks
 #rm -rf ${ref}

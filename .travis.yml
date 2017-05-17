@@ -5,6 +5,7 @@ services:
 - docker
 install:
 - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine:edge /bin/sleep 36000
+- docker exec ct ./prepare.sh
 env:
 - PKG=etcd
 - PKG=hhvm
