@@ -11,7 +11,7 @@ fi
 
 ## prepare
 printc "preparing..."
-bash prepare.sh
+./prepare.sh
 
 ## build app
 bash apps/$PKG
