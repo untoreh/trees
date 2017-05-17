@@ -11,9 +11,7 @@ pkg="hhvm"
 ## copy repo to local filesystem to allow checkout through hardlinks
 cp -a $repo_path $repo_local
 
-## misc
-install_tools "debootstrap"
-
+wget http://dl.archive.ubuntu.com/ubuntu/pool/main/a/apt/ -qO- | grep apt_ | sed -r 's~.*?href="([^"]*)".*~\1~' | tail -4 | grep amd64
 ## build app tree
 prepare_rootfs ${pkg}
 apkc ${pkg} add ${pkg}
