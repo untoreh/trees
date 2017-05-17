@@ -4,7 +4,7 @@ source functions.sh
 repo="trub"
 tree="tree"
 ref="trunk"
-repo_mode={1:-bare-user}
+repo_mode=${1:-bare-user}
 
 cd /srv
 rm -rf ${repo} ${tree}
