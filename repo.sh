@@ -1,7 +1,7 @@
 #!/bin/bash
 source functions.sh
 
-repo="trub"
+repo=$2
 tree="tree"
 ref="trunk"
 repo_mode=${1:-bare-user}
