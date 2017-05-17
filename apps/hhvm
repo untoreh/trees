@@ -36,6 +36,7 @@ rev=$(ostree --repo=${repo_path} commit -s "$(date)-${pkg}-build"  \
  --skip-if-unchanged -b ${pkg} ${pkg})
 
 ## create delta of app branch
+mkdir -p ${out}
 ostree --repo=${repo_path} static-delta generate --from=${ref} ${pkg}  \
  --inline --min-fallback-size 0 --filename=${out}/${rev}
 
