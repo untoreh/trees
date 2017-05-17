@@ -147,10 +147,12 @@ b64name() {
     echo $(basename $(find $1 | grep -E [a-z0-9]{64}))
 }
 
-
-
-
-
+compare_csums() {
+    if [ "$new_csum" = "$old_csum" ] ; then
+        printc "${pkg} already up to update."
+        exit
+    fi
+}
 
 ## routing to add packages over existing tree
 ## checkout the trunk using hardlinks

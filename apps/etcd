@@ -21,19 +21,18 @@ new_csum=$(ostree checksum ${pkg})
 old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
 #old_csum=$(ostree --repo=${repo_local} ls etcd -dC \
 # | grep -Eo " ([^ ]*) /" | sed -r 's/ | \///g')
+
 ## end if unchanged
-if [ "$new_csum" = "$old_csum" ] ; then
-    printc "${pkg} already up to update."
-    exit
-fi
+compare_csums
+
 ## commit tree to app branch
 rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build"  \
- --skip-if-unchanged -b ${pkg} ${pkg})
+     --skip-if-unchanged -b ${pkg} ${pkg})
 
 ## create delta of app branch
 ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg}  \
- --inline --min-fallback-size 0 --filename=${rev}
+    --inline --min-fallback-size 0 --filename=${rev}
 
 ## checksum and compress
-ostree checksum ${pkg} > ${pkg}.sum
-tar cvf delta-${pkg}.tar ${rev}
+ostree checksum ${pkg} >${pkg}.sum
+tar cvf ${pkg}.tar ${rev}
