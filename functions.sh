@@ -37,7 +37,8 @@ fetch_artifact() {
         wget $art_url -qO-
     else
         mkdir -p $3
-        wget $art_url -qO- | tar xa -C $3
+        (wget $art_url -qO- | tar xa -C $3) || \
+        (wget $art_url -qO- | tar xz -C $3)
     fi
 }
 
