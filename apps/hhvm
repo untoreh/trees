@@ -19,7 +19,9 @@ crc add-apt-repository "deb http://dl.hhvm.com/ubuntu $UBUNTU_CODENAME main"
 crc apt update
 crc apt install -y -q hhvm
 umount_hw $pkg
-exit
+wrap_rootfs $pkg
+
+## compare checksums
 new_csum=$(ostree checksum ${pkg})
 ## get the latest app checksum from remote
 old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
@@ -30,12 +32,11 @@ if [ "$new_csum" = "$old_csum" ] ; then
     exit
 fi
 ## commit tree to app branch
-wrap_rootfs ${pkg}
-rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build"  \
+rev=$(ostree --repo=${repo_path} commit -s "$(date)-${pkg}-build"  \
  --skip-if-unchanged -b ${pkg} ${pkg})
 
 ## create delta of app branch
-ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg}  \
+ostree --repo=${repo_path} static-delta generate --from=${ref} ${pkg}  \
  --inline --min-fallback-size 0 --filename=${rev}
 
 ## checksum and compress

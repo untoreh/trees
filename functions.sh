@@ -120,7 +120,7 @@ prepare_rootfs() {
 ## $1 ref
 ## routing after-modification actions for ostree checkouts
 wrap_rootfs() {
-    [ -z "$1" ] && (echo "no target directory privided to wrap_rootfs"; exit 1)
+    [ -z "$1" ] && (echo "no target directory provided to wrap_rootfs"; exit 1)
     cd ${1}
     rm -rf var/cache/apk/*
     umount -Rf dev proc sys run &>/dev/null

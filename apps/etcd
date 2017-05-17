@@ -14,6 +14,7 @@ cp -a $repo_path $repo_local
 ## build app tree
 prepare_rootfs ${pkg}
 apkc ${pkg} add ${pkg}
+wrap_rootfs ${pkg}
 ## get the built dir checksum
 new_csum=$(ostree checksum ${pkg})
 ## get the latest app checksum from remote
@@ -26,7 +27,6 @@ if [ "$new_csum" = "$old_csum" ] ; then
     exit
 fi
 ## commit tree to app branch
-wrap_rootfs ${pkg}
 rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build"  \
  --skip-if-unchanged -b ${pkg} ${pkg})
 
