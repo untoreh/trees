@@ -7,6 +7,7 @@ repo_path=$(./fetch-alp-tree.sh | tail -1)
 repo_local="${PWD}/lrepo"
 ref="trunk"
 pkg="etcd"
+out="out"
 
 ## copy repo to local filesystem to allow checkout through hardlinks
 cp -a $repo_path $repo_local
@@ -19,8 +20,6 @@ wrap_rootfs ${pkg}
 new_csum=$(ostree checksum ${pkg})
 ## get the latest app checksum from remote
 old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
-#old_csum=$(ostree --repo=${repo_local} ls etcd -dC \
-# | grep -Eo " ([^ ]*) /" | sed -r 's/ | \///g')
 
 ## end if unchanged
 compare_csums
@@ -30,9 +29,12 @@ rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build"  \
      --skip-if-unchanged -b ${pkg} ${pkg})
 
 ## create delta of app branch
+mkdir -p $out
 ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg}  \
-    --inline --min-fallback-size 0 --filename=${rev}
+    --inline --min-fallback-size 0 --filename=${out}/${rev}
 
 ## checksum and compress
+cd ${out}
 ostree checksum ${pkg} >${pkg}.sum
 tar cvf ${pkg}.tar ${rev}
+cd -
