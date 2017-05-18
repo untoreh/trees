@@ -4,6 +4,7 @@ language: generic
 services:
 - docker
 install:
+- gem install travis
 - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine:edge /bin/sleep 36000
 - docker exec ct ./prepare.sh
 env:
@@ -12,11 +13,7 @@ env:
 script:
 - docker exec ct ./run.sh $PKG
 - |
-  if [ -f file.up ]; then
-    GIT_REMOTE=$(git remote show origin | grep -i "push.*url" | \
-      sed -r 's~.*push.*?:[ \s]+(.*?://)(.*)$~\1'$GIT_USER:$GIT_TOKEN'@\2~i')
-    git tag -d $TRAVIS_TAG
-    git push --delete $GIT_REMOTE $TRAVIS_TAG
+  if [ $(cat file.up | grep "$PKG") ]; then
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
   fi
 deploy:

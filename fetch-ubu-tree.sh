@@ -8,11 +8,7 @@ m_path="target"
 dest_path="release"
 ref="trunk"
 
-## sanity check
-if [ $(find target/$artifact -type f -maxdepth 0 2>/dev/null | wc -l) -eq 0 ]; then
-    ## fetch img into release folder, beware the slash
-    fetch_artifact $remote_repo /$artifact $dest_path
-fi
+fetch_artifact $remote_repo /$artifact $dest_path
 
 ## trub is a delta, create the repo to apply the delta
 source repo.sh bare-user trub

@@ -29,6 +29,7 @@ last_release() {
 ## $2 artifact name
 ## $3 dest dir
 fetch_artifact() {
+    [ -f $3/$2 ] && return 0
     art_url=$(wget -qO- https://api.github.com/repos/${1}/releases |
     grep browser_download_url | grep ${2} | head -n 1 | cut -d '"' -f 4)
     [ -z "$(echo "$art_url" | grep "://")" ] && exit 1
@@ -43,12 +44,14 @@ fetch_artifact() {
             wget $art_url -qO- | tar xa -C $3
         fi
     fi
+    touch $3/$2
 }
 
 ## $1 image file path
 ## $2 mount target
 ## mount image, ${lon} populated with loop device number
 mount_image() {
+    umount -Rf $2 ; rm -rf $2 && mkdir $2
     lon=0
     while [ -z "`losetup -P /dev/loop${lon} $(realpath ${1}) && echo true`" ]; do
         lon=$((lon + 1))
@@ -154,7 +157,7 @@ b64name() {
 compare_csums() {
     if [ "$new_csum" = "$old_csum" ] ; then
         printc "${pkg} already up to update."
-        touch file.up
+        echo $pkg >> file.up
         exit
     fi
 }
