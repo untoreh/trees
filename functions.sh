@@ -51,7 +51,7 @@ fetch_artifact() {
 ## $2 mount target
 ## mount image, ${lon} populated with loop device number
 mount_image() {
-    umount -Rf $2 ; rm -rf $2 && mkdir $2
+    umount -Rfd $2 ; rm -rf $2 && mkdir $2
     lon=0
     while [ -z "`losetup -P /dev/loop${lon} $(realpath ${1}) && echo true`" ]; do
         lon=$((lon + 1))
