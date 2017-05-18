@@ -43,8 +43,8 @@ fetch_artifact() {
         else
             wget $art_url -qO- | tar xa -C $3
         fi
+        touch $3/$2
     fi
-    touch $3/$2
 }
 
 ## $1 image file path
