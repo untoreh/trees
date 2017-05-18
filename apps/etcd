@@ -9,6 +9,7 @@ ref="trunk"
 pkg="etcd"
 
 ## copy repo to local filesystem to allow checkout through hardlinks
+rm -rf $repo_local
 cp -a $repo_path $repo_local
 
 ## build app tree
