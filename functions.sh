@@ -154,6 +154,7 @@ b64name() {
 compare_csums() {
     if [ "$new_csum" = "$old_csum" ] ; then
         printc "${pkg} already up to update."
+        touch file.up
         exit
     fi
 }

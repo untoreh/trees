@@ -17,7 +17,7 @@ script:
       sed -r 's~.*push.*?:[ \s]+(.*?://)(.*)$~\1'$GIT_USER:$GIT_TOKEN'@\2~i')
     git tag -d $TRAVIS_TAG
     git push --delete $GIT_REMOTE $TRAVIS_TAG
-    travis cancel $TRAVIS_BUILD_NUMBER --no-interactive -t $TRAVIS_TOKEN
+    travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
   fi
 deploy:
   provider: releases
