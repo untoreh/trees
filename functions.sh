@@ -41,7 +41,7 @@ fetch_artifact() {
         if [ $(echo "$2" | grep -E "gz|tgz|zip|xz|7z") ]; then
             wget $art_url -qO- | tar xz -C $3
         else
-            wget $art_url -qO- | tar xa -C $3
+            wget $art_url -qO- | tar x -C $3
         fi
         touch $3/$2
     fi
