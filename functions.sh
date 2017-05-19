@@ -136,9 +136,10 @@ wrap_rootfs() {
     cd -
 }
 
-## $1 packages to install
+## $@ packages to install
 install_tools() {
     setup=false
+    tools="$@"
     for t in $tools ; do
         if [ -z "`apk info -e $t`" ] ; then
             setup=true

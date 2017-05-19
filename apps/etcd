@@ -16,22 +16,22 @@ cp -a $repo_path $repo_local
 prepare_rootfs ${pkg}
 apkc ${pkg} add ${pkg}
 wrap_rootfs ${pkg}
-## get the built dir checksum
-new_csum=$(ostree checksum ${pkg})
-## get the latest app checksum from remote
-old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
-
-## end if unchanged
-compare_csums
 
 ## commit tree to app branch
 rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build"  \
      --skip-if-unchanged -b ${pkg} ${pkg})
+
+## get the last app checksum from remote
+old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
+## get checksum of committed branch
+new_csum=$(ostree --repo=${repo_local} ls ${pkg} -Cd | awk '{print $5}')
+## end if unchanged
+compare_csums
 
 ## create delta of app branch
 ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg}  \
     --inline --min-fallback-size 0 --filename=${rev}
 
 ## checksum and compress
-ostree checksum ${pkg} >${pkg}.sum
+echo $new_csum >${pkg}.sum
 tar cvf ${pkg}.tar ${rev}
