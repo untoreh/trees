@@ -30,7 +30,7 @@ last_release() {
 ## $3 dest dir
 fetch_artifact() {
     [ -f $3/$2 ] && return 0
-    art_url=$(wget -qO- https://api.github.com/repos/${1}/releases |
+    art_url=$(wget -qo- https://api.github.com/repos/${1}/releases |
     grep browser_download_url | grep ${2} | head -n 1 | cut -d '"' -f 4)
     [ -z "$(echo "$art_url" | grep "://")" ] && exit 1
     ## if no destination dir stream to stdo
