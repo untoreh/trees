@@ -15,9 +15,8 @@ ostree checkout --repo=${repo_path} -H --user-mode ${ref} ${pkg}
 mount_hw $pkg
 alias crc="chroot $pkg"
 cp -a /etc/resolv.conf $pkg/etc/
-source $pkg/etc/os-release
 crc apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0x5a16e7281be7a449
-crc add-apt-repository "deb http://dl.hhvm.com/ubuntu $UBUNTU_CODENAME main"
+crc bash -c 'source /etc/os-release ; echo "deb http://dl.hhvm.com/ubuntu $UBUNTU_CODENAME main" > /etc/apt/sources.list.d/hhvm.list'
 crc apt update
 crc apt install -y -q hhvm
 umount_hw $pkg
