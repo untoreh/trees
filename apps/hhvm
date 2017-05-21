@@ -23,8 +23,8 @@ umount_hw $pkg
 wrap_rootfs $pkg
 
 ## commit tree to app branch
-rev=$(ostree --repo=${repo_path} commit -s "$(date)-${pkg}-build"  \
- --skip-if-unchanged -b ${pkg} ${pkg})
+rev=$(ostree --repo=${repo_path} commit -s "$(date)-${pkg}-build" \
+	--skip-if-unchanged --link-checkout-speedup- -b ${pkg} ${pkg})
 
 ## get the last app checksum from remote
 old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
@@ -34,9 +34,9 @@ new_csum=$(ostree --repo=${repo_path} ls ${pkg} -Cd | awk '{print $5}')
 compare_csums
 
 ## create delta of app branch
-ostree --repo=${repo_path} static-delta generate --from=${ref} ${pkg}  \
- --inline --min-fallback-size 0 --filename=${rev}
+ostree --repo=${repo_path} static-delta generate --from=${ref} ${pkg} \
+	--inline --min-fallback-size 0 --filename=${rev}
 
 ## checksum and compress
-ostree checksum ${pkg} > ${pkg}.sum
+ostree checksum ${pkg} >${pkg}.sum
 tar cvf ${pkg}.tar ${rev}
