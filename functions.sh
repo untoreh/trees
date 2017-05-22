@@ -33,17 +33,17 @@ last_release_date() {
         else
         tag="latest"
     fi
-	date -d $(wget -qO- https://api.github.com/repos/${1}/releases/${tag} | grep created_at | head -n 1 | cut -d '"' -f 4) +%Y%m%d
+	date -d $(wget -qO- https://api.github.com/repos/${1}/releases/${tag} | grep created_at | head -n 1 | cut -d '"' -f 4) +%Y%m%d%H%M%S
 }
 
 ## $1 release date
 ## $2 time span eg "7 days ago"
 release_older_than() {
-	if [ $(echo -n $1 | wc -c) != 8 ]; then
+	if [ $(echo -n $1 | wc -c) != 14 ]; then
 		echo "wrong date to compare".
 	fi
     release_d=$1
-    span_d=$(date --date="$2" +"%Y%m%d")
+    span_d=$(date --date="$2" +"%Y%m%d%H%M%S")
     if [ $span_d -ge $release_d ]; then
         return 0
         else
@@ -51,12 +51,13 @@ release_older_than() {
     fi
 }
 
-## $1 repo
+## $1 repo:tag
 ## $2 artifact name
 ## $3 dest dir
 fetch_artifact() {
 	[ -f $3/$2 ] && return 0
-	art_url=$(wget -qO- https://api.github.com/repos/${1}/releases/latest \
+    local repo_fetch=${1/:*} repo_tag=${1/*:} repo_tag=${repo_tag:-latest}
+	art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases/${repo_tag} \
 		| grep browser_download_url | grep ${2} | head -n 1 | cut -d '"' -f 4)
 	[ -z "$(echo "$art_url" | grep "://")" ] && exit 1
 	## if no destination dir stream to stdo

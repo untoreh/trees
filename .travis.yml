@@ -23,7 +23,7 @@ script:
   ## - pkg is already built on the latest base
   ## - it is not older than 1 week
   pkg_d=$(last_release_date $repo_rem $PKG)
-  bas_d=$(last_release_date $user/$BASE)
+  bas_d=$(last_release_date $user/$BAS)
   week_old=$(release_older_than $pkg_d "7 days ago")
   if [ "$PKG" != base -a $bas_d -le $pkg_d -a ! $week_old ]; then
     printc "$PKG was recently built."
@@ -52,3 +52,8 @@ deploy:
   - "${PKG}.sum"
   on:
     tags: true
+after_deploy:
+  - |
+    ## since a build has been deployed update the static tag
+    git symbolic-ref refs/tags/${PKG}-latest refs/tags/$TRAVIS_TAG
+    hub release edit $TRAVIS_TAG -m "" "${PKG}-latest"
