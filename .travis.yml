@@ -7,19 +7,16 @@ install:
 - gem install travis
 - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine:edge /bin/sleep 36000
 - docker exec ct ./prepare.sh
-env:
-- APP=pine:etcd
-- APP=trub:hhvm
 script:
 - |
   source functions.sh
   user=untoreh
   repo_rem=untoreh/trees
-  BAS=${APP/:*/}
-  PKG=${APP/*:/}
-  
+  ## tags format is ${PKG}-YY.MM-X
+  PKG=${TRAVIS_TAG/-*}
+  BAS=$(cat appslist | grep hhvm | sed 's/.*://')
   ## skip build if 
-  ## - the tag was not pushed by base repo (to rebuild all the dependents)
+  ## - the tag was not pushed by base repo (base-* tag to rebuild all the dependents)
   ## - pkg is already built on the latest base
   ## - it is not older than 1 week
   pkg_d=$(last_release_date $repo_rem $PKG)
@@ -32,7 +29,7 @@ script:
   ## if the event is a cron we push a new tag and exit
   newtag=$(md)
   if [ "$TRAVIS_EVENT_TYPE" = cron ]; then
-    git tag $newtag && git push origin --tags
+    git tag ${PKG}-${newtag} && git push origin --tags
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
   fi
 - docker exec ct ./run.sh $PKG
@@ -56,6 +53,7 @@ after_deploy:
   - |
     ## since a build has been deployed update the static tag
     git symbolic-ref refs/tags/${PKG} refs/tags/$TRAVIS_TAG
+    git push --tags
     fetch_artifact github/hub:2.3.0-pre9 "linux-amd64.*.tgz" $PWD
     GITHUB_TOKEN=$GIT_TOKEN
     hub*/bin/hub release edit "$TRAVIS_TAG" -m "" "${PKG}"
