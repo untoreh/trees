@@ -19,6 +19,8 @@ crc apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0x5a16e728
 crc bash -c 'source /etc/os-release ; echo "deb http://dl.hhvm.com/ubuntu $UBUNTU_CODENAME main" > /etc/apt/sources.list.d/hhvm.list'
 crc apt update
 crc apt install -y -q hhvm
+crc apt-get clean
+crc rm -rf /var/lib/apt/lists/*
 umount_hw $pkg
 wrap_rootfs $pkg
 

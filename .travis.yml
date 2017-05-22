@@ -8,11 +8,36 @@ install:
 - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine:edge /bin/sleep 36000
 - docker exec ct ./prepare.sh
 env:
-- PKG=etcd
-- PKG=hhvm
+- APP=pine:etcd
+- APP=trub:hhvm
 script:
+- |
+  source functions.sh
+  user=untoreh
+  repo_rem=untoreh/trees
+  BAS=${APP/:*/}
+  PKG=${APP/*:/}
+  
+  ## skip build if 
+  ## - PKG is not 'base' (the tag was pushed by base repo to build all the dependents)
+  ## - pkg is already built on the latest base
+  ## - it is not older than 1 week
+  pkg_d=$(last_release_date $repo_rem $PKG)
+  bas_d=$(last_release_date $user/$BASE)
+  week_old=$(release_older_than $pkg_d "7 days ago")
+  if [ "$PKG" != base -a $bas_d -le $pkg_d -a ! $week_old ]; then
+    printc "$PKG was recently built."
+    exit
+  fi
+  ## if the event is a cron we push a new tag and exit
+  if [ "$TRAVIS_EVENT_TYPE" = cron ]; then
+    git tag -d $1 && git push --delete origin $1
+    git tag $1 && git push origin --tags
+    travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+  fi
 - docker exec ct ./run.sh $PKG
 - |
+  ## if no changes where made to the tree skip deployment
   if [ $(cat file.up | grep "$PKG") ]; then
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
   fi
@@ -27,4 +52,3 @@ deploy:
   - "${PKG}.sum"
   on:
     tags: true
-
