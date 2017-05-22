@@ -19,7 +19,7 @@ script:
   PKG=${APP/*:/}
   
   ## skip build if 
-  ## - PKG is not 'base' (the tag was pushed by base repo to build all the dependents)
+  ## - the tag was not pushed by base repo (to rebuild all the dependents)
   ## - pkg is already built on the latest base
   ## - it is not older than 1 week
   pkg_d=$(last_release_date $repo_rem $PKG)
@@ -30,9 +30,9 @@ script:
     exit
   fi
   ## if the event is a cron we push a new tag and exit
+  newtag=$(md)
   if [ "$TRAVIS_EVENT_TYPE" = cron ]; then
-    git tag -d $1 && git push --delete origin $1
-    git tag $1 && git push origin --tags
+    git tag $newtag && git push origin --tags
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
   fi
 - docker exec ct ./run.sh $PKG
@@ -55,5 +55,7 @@ deploy:
 after_deploy:
   - |
     ## since a build has been deployed update the static tag
-    git symbolic-ref refs/tags/${PKG}-latest refs/tags/$TRAVIS_TAG
-    hub release edit $TRAVIS_TAG -m "" "${PKG}-latest"
+    git symbolic-ref refs/tags/${PKG} refs/tags/$TRAVIS_TAG
+    fetch_artifact github/hub:2.3.0-pre9 "linux-amd64.*.tgz" $PWD
+    GITHUB_TOKEN=$GIT_TOKEN
+    hub*/bin/hub release edit "$TRAVIS_TAG" -m "" "${PKG}"

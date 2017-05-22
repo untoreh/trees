@@ -25,6 +25,31 @@ last_release() {
 		| awk '/tag_name/ { print $2 }' | head -1 | sed -r 's/",?//g'
 }
 
+## get a valid next tag for the current git repo format: YY.MM-X
+md(){
+    giturl=$(git remote show origin | grep -i fetch | awk '{print $3}')
+    [[ -z "`echo $giturl | grep github`" ]] && echo "'md' tagging method currently works only with github repos, terminating." && exit 1
+    prevV=$(git ls-remote -t $giturl | awk '{print $2}' | cut -d '/' -f 3 | grep -v "\-rc" | cut -d '^' -f 1 | sed 's/^v//' )
+    if [[ -n "$tag_prefix" ]]; then
+        prevV=$(echo "$prevV" | grep $tag_prefix | sed 's/'$tag_prefix'-//' | sort -bt- -k1nr -k2nr | head -1)
+    else
+        prevV=$(echo "$prevV" | sort -bt- -k1nr -k2nr | head -1)
+    fi
+    ## prev date
+    prevD=`echo $prevV | cut -d- -f1`
+    ## prev build number
+    prevN=`echo $prevV | cut -d- -f2`
+    ## gen new release number
+    newD=`date +%y.%m`
+    if [[  $prevD == $newD  ]]; then
+        newN=$((prevN + 1))
+    else
+        newN=0
+    fi
+    newV=$newD-$newN
+    echo "$newV"
+}
+
 ## $1 repo
 ## $2 tag
 last_release_date() {
@@ -56,7 +81,9 @@ release_older_than() {
 ## $3 dest dir
 fetch_artifact() {
 	[ -f $3/$2 ] && return 0
-    local repo_fetch=${1/:*} repo_tag=${1/*:} repo_tag=${repo_tag:-latest}
+    local repo_fetch=${1/:*} repo_tag=${1/*:} 
+    [ -z "$repo_tag" ] && repo_tag=${repo_tag:-latest}
+    repo_tag=tags/$repo_tag
 	art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases/${repo_tag} \
 		| grep browser_download_url | grep ${2} | head -n 1 | cut -d '"' -f 4)
 	[ -z "$(echo "$art_url" | grep "://")" ] && exit 1
