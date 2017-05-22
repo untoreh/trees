@@ -3,18 +3,58 @@ sudo: false
 language: generic
 services:
 - docker
+env:
+- appslist=appslist
 install:
 - gem install travis
 - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine:edge /bin/sleep 36000
 - docker exec ct ./prepare.sh
-env:
-- PKG=etcd
-- PKG=hhvm
 script:
+- |
+  source functions.sh
+  user=untoreh
+  repo_rem=untoreh/trees
+  ## tags format is ${PKG}-YY.MM-X
+  PKG=${TRAVIS_TAG/-*}
+  BAS=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
+  ## skip build if 
+  ## - the tag was not pushed by base repo (base-* tag to rebuild all the dependents)
+  ## - pkg is already built on the latest base
+  ## - it is not older than 1 week
+  pkg_d=$(last_release_date $repo_rem $PKG)
+  bas_d=$(last_release_date $user/$BAS)
+  week_old=$(release_older_than $pkg_d "7 days ago")
+  if [ "$PKG" = "$BAS" -a $bas_d -le $pkg_d -a ! $week_old ]; then
+    printc "$PKG was recently built."
+    exit
+  fi
+  ## if the tag is a base, retag for each app beloning to such base and exit
+  if [ "$PKG" = "$BAS" ]; then
+    for a in $(cat $appslist | grep $BAS); do
+      newtag=$(md)
+      pkg_dep=${a/:*/}
+      git tag ${pkg_dep}-${newtag} && git push origin --tags
+    done
+    travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+    exit
+  fi
+  ## if the event is a cron we push a new tag for each app and exit
+  if [ "$TRAVIS_EVENT_TYPE" = cron ]; then
+    newtag=$(md)
+    for a in $(cat $appslist); do
+      newtag=$(md)
+      pkg_dep=${a/:*/}
+      git tag ${pkg_dep}-${newtag} && git push origin --tags
+    done
+    travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+    exit
+  fi
 - docker exec ct ./run.sh $PKG
 - |
+  ## if no changes where made to the tree skip deployment
   if [ $(cat file.up | grep "$PKG") ]; then
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+    exit
   fi
 deploy:
   provider: releases
@@ -27,4 +67,11 @@ deploy:
   - "${PKG}.sum"
   on:
     tags: true
-
+after_deploy:
+  - |
+    ## since a build has been deployed update the static tag
+    git symbolic-ref refs/tags/${PKG} refs/tags/$TRAVIS_TAG
+    git push --tags
+    fetch_artifact github/hub:2.3.0-pre9 "linux-amd64.*.tgz" $PWD
+    GITHUB_TOKEN=$GIT_TOKEN
+    hub*/bin/hub release edit "$TRAVIS_TAG" -m "" "${PKG}"
