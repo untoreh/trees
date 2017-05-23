@@ -26,6 +26,7 @@ script:
   week_old=$(release_older_than $pkg_d "7 days ago")
   if [ "$PKG" = "$BAS" -a $bas_d -le $pkg_d -a ! $week_old ]; then
     printc "$PKG was recently built."
+    TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER:-$TRAVIS_BUILD_NUMBER}
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
     sleep 3600
   fi
