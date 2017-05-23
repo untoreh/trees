@@ -15,6 +15,7 @@ script:
   echo 00
   user=untoreh
   repo_rem=untoreh/trees
+  repo_rem_url="https://${GIT_USER}:${GIT_TOKEN}@github.com/$repo_rem"
   ## tags format is ${PKG}-YY.MM-X
   PKG=${TRAVIS_TAG/-*}
   if [ -n "$PKG" ]; then
