@@ -24,8 +24,11 @@ script:
   ## - it is not older than 1 week
   echo 0
   pkg_d=$(last_release_date $repo_rem $PKG)
+  echo 01
   bas_d=$(last_release_date $user/$BAS)
+  echo 02
   week_old=$(release_older_than $pkg_d "7 days ago")
+  echo 03
   if [ "$PKG" = "$BAS" -a $bas_d -le $pkg_d -a ! $week_old ]; then
     printc "$PKG was recently built."
     TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER:-$TRAVIS_BUILD_NUMBER}
