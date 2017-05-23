@@ -84,11 +84,10 @@ release_older_than() {
 fetch_artifact() {
 	[ -f $3/$2 ] && return 0
     local repo_fetch=${1/:*} repo_tag=${1/*:} 
-    [ -z "$repo_tag" ] && repo_tag=${repo_tag:-latest}
-    repo_tag=tags/$repo_tag
+    [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=latest || repo_tag=tags/$repo_tag
 	art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases/${repo_tag} \
 		| grep browser_download_url | grep ${2} | head -n 1 | cut -d '"' -f 4)
-	[ -z "$(echo "$art_url" | grep "://")" ] && exit 1
+	[ -z "$(echo "$art_url" | grep "://")" ] && return 1
 	## if no destination dir stream to stdo
 	if [ "$3" = "-" ]; then
 		wget $art_url -qO-
