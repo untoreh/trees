@@ -17,7 +17,9 @@ script:
   repo_rem=untoreh/trees
   ## tags format is ${PKG}-YY.MM-X
   PKG=${TRAVIS_TAG/-*}
-  BAS=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
+  if [ -n "$PKG" ]; then
+    BAS=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
+  fi
   ## skip build if 
   ## - the tag was not pushed by base repo (to rebuild all the dependents)
   ## - pkg is already built on the latest base
@@ -30,7 +32,7 @@ script:
   week_old=$(release_older_than $pkg_d "7 days ago")
   echo 03
   set -x
-  if [ "$PKG" != "$BAS" -a $bas_d -le $pkg_d -a ! $week_old ]; then
+  if [ "$PKG" != "$BAS" -a $bas_d -le $pkg_d -a ! "$week_old" ]; then
     printc "$PKG was recently built."
     TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER:-$TRAVIS_BUILD_NUMBER}
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
