@@ -12,6 +12,7 @@ install:
 script:
 - |
   source functions.sh
+  echo 00
   user=untoreh
   repo_rem=untoreh/trees
   ## tags format is ${PKG}-YY.MM-X
@@ -21,6 +22,7 @@ script:
   ## - the tag was not pushed by base repo (base-* tag to rebuild all the dependents)
   ## - pkg is already built on the latest base
   ## - it is not older than 1 week
+  echo 0
   pkg_d=$(last_release_date $repo_rem $PKG)
   bas_d=$(last_release_date $user/$BAS)
   week_old=$(release_older_than $pkg_d "7 days ago")
@@ -28,6 +30,7 @@ script:
     printc "$PKG was recently built."
     TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER:-$TRAVIS_BUILD_NUMBER}
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+    echo skip1
     sleep 3600
   fi
   echo 1
@@ -39,6 +42,7 @@ script:
       git tag ${pkg_dep}-${newtag} && git push origin --tags
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+    echo skip2
     sleep 3600
   fi
   echo 2
@@ -51,6 +55,7 @@ script:
       git tag ${pkg_dep}-${newtag} && git push origin --tags
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+    echo skip3
     sleep 3600
   fi
   echo 3
