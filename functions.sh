@@ -33,6 +33,7 @@ md(){
     if [[ -n "$tag_prefix" ]]; then
         prevV=$(echo "$prevV" | grep $tag_prefix | sed 's/'$tag_prefix'-//' | sort -bt- -k1nr -k2nr | head -1)
     else
+        echo "no \$tag_prefix specified, using to prefix." 1>&2
         prevV=$(echo "$prevV" | sort -bt- -k1nr -k2nr | head -1)
     fi
     ## prev date
@@ -58,7 +59,9 @@ last_release_date() {
         else
         tag="latest"
     fi
-	date -d $(wget -qO- https://api.github.com/repos/${1}/releases/${tag} | grep created_at | head -n 1 | cut -d '"' -f 4) +%Y%m%d%H%M%S
+	local date=$(wget -qO- https://api.github.com/repos/${1}/releases/${tag} | grep created_at | head -n 1 | cut -d '"' -f 4)
+	[ -z "$date" ] && echo 0 && return
+	date -d "$date" +%Y%m%d%H%M%S
 }
 
 ## $1 release date
@@ -68,7 +71,7 @@ release_older_than() {
 		echo "wrong date to compare".
 	fi
     release_d=$1
-    span_d=$(date --date="$2" +"%Y%m%d%H%M%S")
+    span_d=$(date --date="$2" +%Y%m%d%H%M%S)
     if [ $span_d -ge $release_d ]; then
         return 0
         else
@@ -82,11 +85,10 @@ release_older_than() {
 fetch_artifact() {
 	[ -f $3/$2 ] && return 0
     local repo_fetch=${1/:*} repo_tag=${1/*:} 
-    [ -z "$repo_tag" ] && repo_tag=${repo_tag:-latest}
-    repo_tag=tags/$repo_tag
+    [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=latest || repo_tag=tags/$repo_tag
 	art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases/${repo_tag} \
 		| grep browser_download_url | grep ${2} | head -n 1 | cut -d '"' -f 4)
-	[ -z "$(echo "$art_url" | grep "://")" ] && exit 1
+	[ -z "$(echo "$art_url" | grep "://")" ] && return 1
 	## if no destination dir stream to stdo
 	if [ "$3" = "-" ]; then
 		wget $art_url -qO-
