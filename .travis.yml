@@ -46,10 +46,9 @@ script:
   fi
   ## if the event is a cron or commit is not app-prefixed we push a new tag for each app and exit
   if [ "$TRAVIS_EVENT_TYPE" = cron -a -z "$PKG" ]; then
-    newtag=$(md)
     for a in $(cat $appslist); do
-      newtag=$(md)
       tag_prefix=${a/:*/}
+      newtag=$(md)
       git tag ${tag_prefix}-${newtag} && git push --tags $repo_rem_url
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
