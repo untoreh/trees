@@ -38,10 +38,14 @@ script:
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
     exit
   fi
-  ## if the event is a cron we push a new tag and exit
+  ## if the event is a cron we push a new tag for each app and exit
   if [ "$TRAVIS_EVENT_TYPE" = cron ]; then
     newtag=$(md)
-    git tag ${PKG}-${newtag} && git push origin --tags
+    for a in $(cat $appslist); do
+      newtag=$(md)
+      pkg_dep=${a/:*/}
+      git tag ${pkg_dep}-${newtag} && git push origin --tags
+    done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
     exit
   fi
