@@ -42,8 +42,9 @@ script:
   set +x
   echo 1
   ## if the tag is a base, retag for each app beloning to such base and exit
+  ## if there is no prefix (both PKG and BAS are empty) all apps get retagged (grep "")
   if [ "$PKG" = "$BAS" ]; then
-    for a in $(cat $appslist | grep $BAS); do
+    for a in $(cat $appslist | grep "$BAS"); do
       newtag=$(md)
       pkg_dep=${a/:*/}
       git tag ${pkg_dep}-${newtag} && git push origin --tags
