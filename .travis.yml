@@ -48,7 +48,7 @@ script:
     for a in $(cat $appslist | grep "$BAS"); do
       newtag=$(md)
       pkg_dep=${a/:*/}
-      git tag ${pkg_dep}-${newtag} && git push origin --tags
+      git tag ${pkg_dep}-${newtag} && git push origin --tags $repo_rem_url
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
     echo skip2
@@ -61,7 +61,7 @@ script:
     for a in $(cat $appslist); do
       newtag=$(md)
       pkg_dep=${a/:*/}
-      git tag ${pkg_dep}-${newtag} && git push origin --tags
+      git tag ${pkg_dep}-${newtag} && git push origin --tags $repo_rem_url
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
     echo skip3
@@ -90,7 +90,7 @@ after_deploy:
   - |
     ## since a build has been deployed update the static tag
     git symbolic-ref refs/tags/${PKG} refs/tags/$TRAVIS_TAG
-    git push --tags
+    git push --tags $repo_rem_url
     fetch_artifact github/hub:2.3.0-pre9 "linux-amd64.*.tgz" $PWD
     GITHUB_TOKEN=$GIT_TOKEN
     hub*/bin/hub release edit "$TRAVIS_TAG" -m "" "${PKG}"
