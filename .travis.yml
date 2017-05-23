@@ -12,7 +12,6 @@ install:
 script:
 - |
   source functions.sh
-  echo 00
   user=untoreh
   repo_rem=untoreh/trees
   repo_rem_url="https://${GIT_USER}:${GIT_TOKEN}@github.com/$repo_rem"
@@ -25,23 +24,15 @@ script:
   ## - the tag was not pushed by base repo (to rebuild all the dependents)
   ## - pkg is already built on the latest base
   ## - it is not older than 1 week
-  echo 0
   pkg_d=$(last_release_date $repo_rem $PKG)
-  echo 01
   bas_d=$(last_release_date $user/$BAS)
-  echo 02
   week_old=$(release_older_than $pkg_d "7 days ago")
-  echo 03
-  set -x
   if [ "$PKG" != "$BAS" -a $bas_d -le $pkg_d -a ! "$week_old" ]; then
     printc "$PKG was recently built."
     TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER:-$TRAVIS_BUILD_NUMBER}
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
-    echo skip1
     sleep 3600
   fi
-  set +x
-  echo 1
   ## if the tag is a base, retag for each app beloning to such base and exit
   ## if there is no prefix (both PKG and BAS are empty) all apps get retagged (grep "")
   if [ "$PKG" = "$BAS" ]; then
@@ -51,10 +42,8 @@ script:
       git tag ${tag_prefix}-${newtag} && git push --tags $repo_rem_url
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
-    echo skip2
     sleep 3600
   fi
-  echo 2
   ## if the event is a cron or commit is not app-prefixed we push a new tag for each app and exit
   if [ "$TRAVIS_EVENT_TYPE" = cron -a -z "$PKG" ]; then
     newtag=$(md)
@@ -64,10 +53,8 @@ script:
       git tag ${tag_prefix}-${newtag} && git push --tags $repo_rem_url
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
-    echo skip3
     sleep 3600
   fi
-  echo 3
 - docker exec ct ./run.sh $PKG
 - |
   ## if no changes where made to the tree skip deployment
