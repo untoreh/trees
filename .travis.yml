@@ -27,7 +27,8 @@ script:
   week_old=$(release_older_than $pkg_d "7 days ago")
   if [ "$PKG" = "$BAS" -a $bas_d -le $pkg_d -a ! $week_old ]; then
     printc "$PKG was recently built."
-    exit
+    travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+    sleep 3600
   fi
   ## if the tag is a base, retag for each app beloning to such base and exit
   if [ "$PKG" = "$BAS" ]; then
@@ -37,7 +38,7 @@ script:
       git tag ${pkg_dep}-${newtag} && git push origin --tags
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
-    exit
+    sleep 3600
   fi
   ## if the event is a cron or commit is not app-prefixed we push a new tag for each app and exit
   if [ "$TRAVIS_EVENT_TYPE" = cron -a -z "$PKG" ]; then
@@ -48,14 +49,14 @@ script:
       git tag ${pkg_dep}-${newtag} && git push origin --tags
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
-    exit
+    sleep 3600
   fi
 - docker exec ct ./run.sh $PKG
 - |
   ## if no changes where made to the tree skip deployment
   if [ $(cat file.up | grep "$PKG") ]; then
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
-    exit
+    sleep 3600
   fi
 deploy:
   provider: releases
