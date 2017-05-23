@@ -48,7 +48,7 @@ script:
     for a in $(cat $appslist | grep "$BAS"); do
       newtag=$(md)
       pkg_dep=${a/:*/}
-      git tag ${pkg_dep}-${newtag} && git push origin --tags $repo_rem_url
+      git tag ${pkg_dep}-${newtag} && git push --tags $repo_rem_url
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
     echo skip2
@@ -61,7 +61,7 @@ script:
     for a in $(cat $appslist); do
       newtag=$(md)
       pkg_dep=${a/:*/}
-      git tag ${pkg_dep}-${newtag} && git push origin --tags $repo_rem_url
+      git tag ${pkg_dep}-${newtag} && git push --tags $repo_rem_url
     done
     travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
     echo skip3
