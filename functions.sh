@@ -58,7 +58,9 @@ last_release_date() {
         else
         tag="latest"
     fi
-	date -d $(wget -qO- https://api.github.com/repos/${1}/releases/${tag} | grep created_at | head -n 1 | cut -d '"' -f 4) +%Y%m%d%H%M%S
+	local date=$(wget -qO- https://api.github.com/repos/${1}/releases/${tag} | grep created_at | head -n 1 | cut -d '"' -f 4)
+	[ -z "$date" ] && echo 0 && return
+	date -d "$date" +%Y%m%d%H%M%S
 }
 
 ## $1 release date
@@ -68,7 +70,7 @@ release_older_than() {
 		echo "wrong date to compare".
 	fi
     release_d=$1
-    span_d=$(date --date="$2" +"%Y%m%d%H%M%S")
+    span_d=$(date --date="$2" +%Y%m%d%H%M%S)
     if [ $span_d -ge $release_d ]; then
         return 0
         else
