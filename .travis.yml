@@ -29,6 +29,7 @@ script:
   echo 02
   week_old=$(release_older_than $pkg_d "7 days ago")
   echo 03
+  set -x
   if [ "$PKG" != "$BAS" -a $bas_d -le $pkg_d -a ! $week_old ]; then
     printc "$PKG was recently built."
     TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER:-$TRAVIS_BUILD_NUMBER}
@@ -36,6 +37,7 @@ script:
     echo skip1
     sleep 3600
   fi
+  set +x
   echo 1
   ## if the tag is a base, retag for each app beloning to such base and exit
   if [ "$PKG" = "$BAS" ]; then
