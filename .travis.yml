@@ -12,6 +12,7 @@ install:
 script:
 - |
   source functions.sh
+  set -x
   user=untoreh
   repo_rem=untoreh/trees
   ## tags format is ${PKG}-YY.MM-X
