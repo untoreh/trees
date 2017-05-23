@@ -39,7 +39,7 @@ script:
     exit
   fi
   ## if the event is a cron or commit is not app-prefixed we push a new tag for each app and exit
-  if [ "$TRAVIS_EVENT_TYPE" = cron || -z "$PKG" ]; then
+  if [ "$TRAVIS_EVENT_TYPE" = cron -a -z "$PKG" ]; then
     newtag=$(md)
     for a in $(cat $appslist); do
       newtag=$(md)
