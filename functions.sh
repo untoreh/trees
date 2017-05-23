@@ -33,6 +33,7 @@ md(){
     if [[ -n "$tag_prefix" ]]; then
         prevV=$(echo "$prevV" | grep $tag_prefix | sed 's/'$tag_prefix'-//' | sort -bt- -k1nr -k2nr | head -1)
     else
+        echo "no \$tag_prefix specified, using to prefix." 1>&2
         prevV=$(echo "$prevV" | sort -bt- -k1nr -k2nr | head -1)
     fi
     ## prev date
