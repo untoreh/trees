@@ -59,7 +59,7 @@ handle_deploy() {
 handle_tags() {
 	## since a build has been deployed update the static tag
 	git symbolic-ref refs/tags/${PKG} refs/tags/$TRAVIS_TAG
-	git push --tags $repo_rem_url
+	git push --tags --force $repo_rem_url
 	fetch_artifact github/hub:2.3.0-pre9 "linux-amd64.*.tgz" $PWD
 	GITHUB_TOKEN=$GIT_TOKEN
 	hub*/bin/hub release edit "$TRAVIS_TAG" -m "" "${PKG}"
