@@ -9,7 +9,7 @@ install:
 - source travis-helper.sh
 - handle_build
 before_script:
-- docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine:edge /bin/sleep 36000
+- docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
 - docker exec ct ./prepare.sh
 script:
  - docker exec ct ./run.sh $PKG
