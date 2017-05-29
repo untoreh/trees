@@ -7,6 +7,10 @@ repo_rem=untoreh/trees
 repo_rem_url="https://${GIT_USER}:${GIT_TOKEN}@github.com/$repo_rem"
 
 handle_build() {
+	## avoid non-tagged commits
+	if [ -z "$TRAVIS_TAG" ]; then
+		return
+    fi
 	## tags format is ${PKG}-YY.MM-X
 	PKG=${TRAVIS_TAG/-*/}
 	if [ -n "$PKG" ]; then
