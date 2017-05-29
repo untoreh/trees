@@ -22,7 +22,7 @@ deploy:
   skip_cleanup: true
   file_glob: true
   file:
-  - "${PKG}.tar"
+  - "${PKG}*.tar"
   - "${PKG}.sum"
   on:
     tags: true

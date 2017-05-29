@@ -35,3 +35,16 @@ ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
 ## checksum and compress
 echo $new_csum >${pkg}.sum
 tar cvf ${pkg}.tar ${rev}
+
+## -- ovz --
+repo_local=$(./fetch-alp_ovz-tree.sh | tail -1)
+## commit tree to app branch
+rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
+	--skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
+## skip csum comparison, if bare image is different so is ovz
+## create delta of app branch
+ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
+	--inline --min-fallback-size 0 --filename=${rev}
+
+## compress
+tar cvf ${pkg}_ovz.tar ${rev}
