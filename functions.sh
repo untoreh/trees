@@ -1,10 +1,15 @@
 #!/bin/bash
 
 shopt -s expand_aliases &>/dev/null
+[ ${GIT_TOKEN:-} ] && gh_token="?access_token=${GIT_TOKEN}"
 cn="\033[1;32;40m"
 cf="\033[0m"
 printc() {
-	echo -e "${cn}$@${cf}"
+	echo -e "${cn}${@}${cf}"
+}
+rse()
+{
+    ((eval $(for phrase in "$@"; do echo -n "'$phrase' "; done)) 3>&1 1>&2 2>&3 | sed -e "s/^\(.*\)$/$(echo -en \\033)[31;1m\1$(echo -en \\033)[0m/") 3>&1 1>&2 2>&3
 }
 
 git_versions() {
@@ -19,46 +24,74 @@ last_version() {
 	git_versions $1 | sort -bt. -k1nr -k2nr -k3r -k4r -k5r | head -1
 }
 
-## $1 repo
+## $1 repo $2 type
 last_release() {
-	wget -qO- https://api.github.com/repos/${1}/releases/latest \
-		| awk '/tag_name/ { print $2 }' | head -1 | sed -r 's/",?//g'
+	if [ -n "$2" ]; then
+		latest=
+		release_type="$2"
+	else
+		latest="/latest"
+	fi
+	wget -qO- https://api.github.com/repos/${1}/releases$latest \
+		| awk '/tag_name/ { print $2 }' | grep "$release_type" | head -1 | sed -r 's/",?//g'
+}
+
+## $1 repo $2 currentTag(YY.MM-X)
+next_release() {
+	if [ -n "$2" ]; then
+		cur_tag="$2"
+	else
+		return
+	fi
+	cur_D=$(echo $cur_tag | cut -d- -f1)
+	## get this month tags
+	near_tags=$(git ls-remote -t https://github.com/${1} --match "$cur_D*" | awk '{print $2}' \
+		| cut -d '/' -f 3 | cut -d '^' -f 1 | sed 's/^v//' | sort -bt- -k2n)
+	## loop until we find a valid release
+	while
+		cur_tag=$(echo "$near_tags" | awk '/'$cur_tag'/{getline; print $0}')
+		echo "looking for releases tagged $cur_tag" 1>&2
+		next_release=$(wget -qO- https://api.github.com/repos/${1}/releases/tags/${cur_tag}${gh_token})
+		[ -z "$next_release" -a -n "$cur_tag" ]
+	do :
+	done
+	echo $cur_tag
 }
 
 ## get a valid next tag for the current git repo format: YY.MM-X
-md(){
-    giturl=$(git remote show origin | grep -i fetch | awk '{print $3}')
-    [[ -z "`echo $giturl | grep github`" ]] && echo "'md' tagging method currently works only with github repos, terminating." && exit 1
-    prevV=$(git ls-remote -t $giturl | awk '{print $2}' | cut -d '/' -f 3 | grep -v "\-rc" | cut -d '^' -f 1 | sed 's/^v//' )
-    if [[ -n "$tag_prefix" ]]; then
-        prevV=$(echo "$prevV" | grep $tag_prefix | sed 's/'$tag_prefix'-//' | sort -bt- -k1nr -k2nr | head -1)
-    else
-        echo "no \$tag_prefix specified, using to prefix." 1>&2
-        prevV=$(echo "$prevV" | sort -bt- -k1nr -k2nr | head -1)
-    fi
-    ## prev date
-    prevD=`echo $prevV | cut -d- -f1`
-    ## prev build number
-    prevN=`echo $prevV | cut -d- -f2`
-    ## gen new release number
-    newD=`date +%y.%m`
-    if [[  $prevD == $newD  ]]; then
-        newN=$((prevN + 1))
-    else
-        newN=0
-    fi
-    newV=$newD-$newN
-    echo "$newV"
+md() {
+	giturl=$(git remote show origin | grep -i fetch | awk '{print $3}')
+	[ -z "$(echo $giturl | grep github)" ] && echo "'md' tagging method currently works only with github repos, terminating." && exit 1
+	prevV=$(git ls-remote -t $giturl | awk '{print $2}' | cut -d '/' -f 3 | grep -v "\-rc" | cut -d '^' -f 1 | sed 's/^v//')
+	if [ -n "$tag_prefix" ]; then
+		prevV=$(echo "$prevV" | grep $tag_prefix | sed 's/'$tag_prefix'-//' | sort -bt- -k1nr -k2nr | head -1)
+	else
+		echo "no \$tag_prefix specified, using to prefix." 1>&2
+		prevV=$(echo "$prevV" | sort -bt- -k1nr -k2nr | head -1)
+	fi
+	## prev date
+	prevD=$(echo $prevV | cut -d- -f1)
+	## prev build number
+	prevN=$(echo $prevV | cut -d- -f2)
+	## gen new release number
+	newD=$(date +%y.%m)
+	if [[ $prevD == $newD ]]; then
+		newN=$((prevN + 1))
+	else
+		newN=0
+	fi
+	newV=$newD-$newN
+	echo "$newV"
 }
 
 ## $1 repo
 ## $2 tag
 last_release_date() {
-    if [ -n "$2" ]; then
-        tag="tags/$2"
-        else
-        tag="latest"
-    fi
+	if [ -n "$2" ]; then
+		tag="tags/$2"
+	else
+		tag="latest"
+	fi
 	local date=$(wget -qO- https://api.github.com/repos/${1}/releases/${tag} | grep created_at | head -n 1 | cut -d '"' -f 4)
 	[ -z "$date" ] && echo 0 && return
 	date -d "$date" +%Y%m%d%H%M%S
@@ -70,36 +103,47 @@ release_older_than() {
 	if [ $(echo -n $1 | wc -c) != 14 ]; then
 		echo "wrong date to compare".
 	fi
-    release_d=$1
-    span_d=$(date --date="$2" +%Y%m%d%H%M%S)
-    if [ $span_d -ge $release_d ]; then
-        return 0
-        else
-        return 1
-    fi
+	release_d=$1
+	span_d=$(date --date="$2" +%Y%m%d%H%M%S)
+	if [ $span_d -ge $release_d ]; then
+		return 0
+	else
+		return 1
+	fi
 }
 
 ## $1 repo:tag
 ## $2 artifact name
 ## $3 dest dir
 fetch_artifact() {
-	[ -f $3/$2 ] && return 0
-    local repo_fetch=${1/:*} repo_tag=${1/*:} 
-    [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=latest || repo_tag=tags/$repo_tag
-	art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases/${repo_tag} \
-		| grep browser_download_url | grep ${2} | head -n 1 | cut -d '"' -f 4)
-	[ -z "$(echo "$art_url" | grep "://")" ] && return 1
+	if [ "${1:0:4}" = "http" ]; then
+		art_url="$1"
+		artf=$(basename $art_url)
+		dest="$2"
+	else
+		local repo_fetch=${1/:*/} repo_tag=${1/*:/}
+		[ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=latest || repo_tag=tags/$repo_tag
+		artf="$2"
+		art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases/${repo_tag} \
+			| grep browser_download_url | grep ${artf} | head -n 1 | cut -d '"' -f 4)
+		dest="$3"
+	fi
+	[ -z "$(echo "$art_url" | grep "://")" ] && echo "no url found" && return 1
 	## if no destination dir stream to stdo
-	if [ "$3" = "-" ]; then
+	if [ "$dest" = "-" ]; then
 		wget $art_url -qO-
 	else
-		mkdir -p $3
-		if [ $(echo "$2" | grep -E "gz|tgz|zip|xz|7z") ]; then
-			wget $art_url -qO- | tar xzf - -C $3
+		mkdir -p $dest
+		if [ $(echo "$artf" | grep -E "gz|tgz|xz|7z") ]; then
+			wget $art_url -qO- | tar xzf - -C $dest
 		else
-			wget $art_url -qO- | tar xf - -C $3
+			if [ $(echo "$artf" | grep -E "zip") ]; then
+				wget $art_url -qO artifact.zip && unzip artifact.zip -d $dest
+				rm artifact.zip
+			else
+				wget $art_url -qO- | tar xf - -C $dest
+			fi
 		fi
-		touch $3/$2
 	fi
 }
 
@@ -237,6 +281,14 @@ install_glib() {
 	fi
 	rm glibc-$GLIB_VERSION.apk
 	mount -o remount,rw /proc &>/dev/null
+}
+
+usr_bind_rw() {
+    if ! (cat /proc/mounts | grep -qE "\s/usr\s.*\s,?rw,?"); then
+		os=$(ostree admin status | awk '/\*/{print $2}')
+		dpl=$(ostree admin status | awk '/\*/{print $3}')
+		mount -o bind,rw /ostree/deploy/${os}/deploy/${dpl}/usr /usr
+    fi
 }
 ## routing to add packages over existing tree
 ## checkout the trunk using hardlinks
