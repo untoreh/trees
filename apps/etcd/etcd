@@ -19,7 +19,7 @@ wrap_rootfs ${pkg}
 
 ## commit tree to app branch
 rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
-	--skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
+    --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
 
 ## get the last app checksum from remote
 old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
@@ -30,7 +30,7 @@ compare_csums
 
 ## create delta of app branch
 ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
-	--inline --min-fallback-size 0 --filename=${rev}
+    --inline --min-fallback-size 0 --filename=${rev}
 
 ## checksum and compress
 echo $new_csum >${pkg}.sum
@@ -40,11 +40,11 @@ tar cvf ${pkg}.tar ${rev}
 repo_local=$(./fetch-alp_ovz-tree.sh | tail -1)
 ## commit tree to app branch
 rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
-	--skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
+    --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
 ## skip csum comparison, if bare image is different so is ovz
 ## create delta of app branch
 ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
-	--inline --min-fallback-size 0 --filename=${rev}
+    --inline --min-fallback-size 0 --filename=${rev}
 
 ## compress
 tar cvf ${pkg}_ovz.tar ${rev}
