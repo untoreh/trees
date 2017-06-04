@@ -36,6 +36,19 @@ last_release() {
 		| awk '/tag_name/ { print $2 }' | grep "$release_type" | head -1 | sed -r 's/",?//g'
 }
 
+## $1 repo $2 tag name
+tag_id() {
+	[ -n "$2" ] && tag_name="tags/${2}" || tag_name=latest
+	wget -qO- https://api.github.com/repos/${1}/releases/${tag_name} | grep '"id"' | head -1 | grep -o "[0-9]*"
+}
+## $1 repo $2 old tag $3 new tag
+switch_release_tag(){
+	tid=$(tag_id ${1} ${2})
+	curl -u $GIT_USER:$GIT_TOKEN \
+	-d '{"tag_name": "'${3}'", "name": "'${3}'"}' \
+	https://api.github.com/repos/${1}/releases/${tid}
+}
+
 ## $1 repo $2 currentTag(YY.MM-X)
 next_release() {
 	if [ -n "$2" ]; then
