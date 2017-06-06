@@ -45,9 +45,10 @@ cd -
 
 ## modpgs
 minus=$(($(echo $NPS_VERSION | grep -o [0-9]$)-1)) ## effort to try previous minor version in case of hotfixes
+PREV_NPS_VERSION=${NPS_VERSION/%[0-9]/$minus}
 wget https://dl.google.com/dl/linux/mod-pagespeed/tar/beta/mod-pagespeed-beta-$NPS_VERSION-r0.tar.bz2 || \
-NPS_VERSION=${NPS_VERSION/%[0-9]/$minus} && \
-wget https://dl.google.com/dl/linux/mod-pagespeed/tar/beta/mod-pagespeed-beta-$NPS_VERSION-r0.tar.bz2 || \
+wget https://dl.google.com/dl/linux/mod-pagespeed/tar/beta/mod-pagespeed-beta-$PREV_NPS_VERSION-r0.tar.bz2 && \
+NPS_VERSION=$PREV_NPS_VERSION || \
 echo "failed downloading mod-pagespeed sources" 1>&2 && exit 1
 tar -jxf mod-pagespeed-beta-$NPS_VERSION-r0.tar.bz2
 cd modpagespeed-$NPS_VERSION/
