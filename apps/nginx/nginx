@@ -57,7 +57,9 @@ cd modpagespeed-$NPS_VERSION/
     -D use_system_libs=1 \
     -D _GLIBCXX_USE_CXX11_ABI=0 \
     -D use_system_icu=1
-find $patchesp/*.patch | xargs git apply
+for pa in $(find $patchesp/*.patch); do 
+    git apply $pa
+done
 
 cd src/
 make -j $jobs \
