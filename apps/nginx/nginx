@@ -11,7 +11,8 @@ pwd=$PWD
 modulesp="$pwd/apps/$pkg/modules"
 patchesp="$pwd/apps/$pkg/patches"
 outp="out/$pkg"
-jobs=$(cat /proc/cpuinfo | grep processor | wc -l || 1)
+# jobs=$(cat /proc/cpuinfo | grep processor | wc -l || 1)
+jobs=4
 
 ## prepare deps
 apk add sudo git apache2-dev alpine-sdk python apr-dev apr-util-dev \
@@ -148,10 +149,10 @@ LD_LIBRARY_PATH=/usr/lib
 --with-mail \
 --with-mail_ssl_module \
 --add-module=../ngx_pagespeed-${NPS_VERSION}-beta \
---with-cc-opt="-flto -fpic -i /usr/include/apr-1 -d_gnu_source -os -ffast-math \
+--with-cc-opt="-flto -fPIC -I /usr/include/apr-1 -D_GNU_SOURCE -Os -ffast-math \
     -ffunction-sections -fdata-sections" \
---with-ld-opt="-wl,--gc-sections -luuid -lapr-1 -laprutil-1 -licudata -licuuc \
-    -l$pkgdir/usr/lib -lpng12 -lturbojpeg -ljpeg"
+--with-ld-opt="-Wl,--gc-sections -luuid -lapr-1 -laprutil-1 -licudata -licuuc \
+    -L$pkgdir/usr/lib -lpng12 -lturbojpeg -ljpeg"
 
 make -j $jobs
 mkdir -p $outp
