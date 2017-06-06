@@ -10,4 +10,4 @@ if [ ! $PKG ]; then
 fi
 
 ## build app
-./apps/$PKG
+./apps/$PKG/$PKG
