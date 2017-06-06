@@ -1,5 +1,5 @@
---- third_party/re2/src/re2/dfa.cc
-+++ third_party/re2/src/re2/dfa.cc
+--- a/src/third_party/re2/src/re2/dfa.cc
++++ b/src/third_party/re2/src/re2/dfa.cc
 @@ -124,7 +124,7 @@
      uint32_t flag_;     // Empty string bitfield flags in effect on the way
                          // into this state, along with kFlagMatch if this
