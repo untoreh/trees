@@ -1,5 +1,5 @@
---- third_party/hiredis/src/hiredis.h
-+++ third_party/hiredis/src/hiredis.h
+--- a/src/third_party/hiredis/src/hiredis.h
++++ b/src/third_party/hiredis/src/hiredis.h
 @@ -98,7 +98,7 @@
           * then GNU strerror_r returned an internal static buffer and we       \
           * need to copy the result into our private buffer. */                 \

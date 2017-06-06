@@ -11,7 +11,7 @@ pwd=$PWD
 modulesp="$pwd/apps/$pkg/modules"
 patchesp="$pwd/apps/$pkg/patches"
 outp="out/$pkg"
-jobs=${$(cat /proc/cpuinfo | grep processor | wc -l):-1}
+jobs=$(cat /proc/cpuinfo | grep processor | wc -l || 1)
 
 ## prepare deps
 apk add sudo git apache2-dev alpine-sdk python apr-dev apr-util-dev \
@@ -49,7 +49,7 @@ PREV_NPS_VERSION=${NPS_VERSION/%[0-9]/$minus}
 wget https://dl.google.com/dl/linux/mod-pagespeed/tar/beta/mod-pagespeed-beta-$NPS_VERSION-r0.tar.bz2 || \
 wget https://dl.google.com/dl/linux/mod-pagespeed/tar/beta/mod-pagespeed-beta-$PREV_NPS_VERSION-r0.tar.bz2 && \
 NPS_VERSION=$PREV_NPS_VERSION || \
-echo "failed downloading mod-pagespeed sources" 1>&2 && exit 1
+(echo "failed downloading mod-pagespeed sources" 1>&2 && exit 1)
 tar -jxf mod-pagespeed-beta-$NPS_VERSION-r0.tar.bz2
 cd modpagespeed-$NPS_VERSION/
 
@@ -104,7 +104,7 @@ cd nginx-${NGINX_VERSION}
 ## custom image filter module
 mv $modulesp/ngx_http_image_filter_module.c src/http/modules
 
-ld_library_path=/usr/lib
+LD_LIBRARY_PATH=/usr/lib
 ./configure \
 --prefix=/usr/share/nginx \
 --sbin-path=/usr/sbin/nginx \

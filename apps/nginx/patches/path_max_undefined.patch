@@ -1,9 +1,11 @@
---- /usr/include/fortify/stdlib.h
-+++ /usr/include/fortify/stdlib.h
-@@ -12,6 +12,7 @@
-  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-  */
-+#include <limits.h>
- #ifndef _FORTIFY_STDLIB_H
- #define _FORTIFY_STDLIB_H
+--- a/src/third_party/re2/src/re2/dfa.cc
++++ b/src/third_party/re2/src/re2/dfa.cc
+@@ -124,7 +124,7 @@
+     uint32_t flag_;     // Empty string bitfield flags in effect on the way
+                         // into this state, along with kFlagMatch if this
+                         // is a matching state.
+-    std::atomic<State*> next_[];    // Outgoing arrows from State,
++    std::atomic<State*> next_[0];    // Outgoing arrows from State,
+                         // one per input byte class
+   };
+
