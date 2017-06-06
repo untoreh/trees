@@ -145,7 +145,7 @@ LD_LIBRARY_PATH=/usr/lib
 \
 --with-mail \
 --with-mail_ssl_module \
---add-module=../ngx_pagespeed-${nps_version}-beta \
+--add-module=../ngx_pagespeed-${NPS_VERSION}-beta \
 --with-cc-opt="-flto -fpic -i /usr/include/apr-1 -d_gnu_source -os -ffast-math \
     -ffunction-sections -fdata-sections" \
 --with-ld-opt="-wl,--gc-sections -luuid -lapr-1 -laprutil-1 -licudata -licuuc \
