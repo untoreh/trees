@@ -9,10 +9,8 @@ install:
 - source travis-helper.sh
 - handle_build
 - stage: a
-  services:
-  - docker
-  env:
-   - STAGE=a
+  # env:
+  #  - STAGE=a
   script: docker pull alpine
   # script: |
   #   docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
