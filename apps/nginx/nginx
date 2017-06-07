@@ -5,7 +5,6 @@ source functions.sh
 stage_$STAGE
 
 stage_a(){
-    env
 	rem_repo="untoreh/trees"
 	repo_path=$(./fetch-alp-tree.sh | tail -1)
 	repo_local="${PWD}/lrepo"

@@ -9,6 +9,8 @@ install:
 - source travis-helper.sh
 - handle_build
 - stage: a
+  services:
+  - docker
   env:
    - STAGE=a
   script: 
