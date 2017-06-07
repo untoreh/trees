@@ -4,31 +4,14 @@ language: generic
 services:
 - docker
 env:
-- appslist=appslist
+- STAGES=(1 2 3)
 install:
 - source travis-helper.sh
 - handle_build
-- stage: a
-  env:
-   - STAGE=a
-  script: 
-  - docker exec ct ./run.sh $PKG
-  - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
-  - docker exec ct ./prepare.sh
-- stage: b
-  env:
-   - STAGE=b
-  script: 
-  - docker exec ct ./run.sh $PKG
-  - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
-  - docker exec ct ./prepare.sh
-- stage: c
-  env:
-   - STAGE=c
-  script: 
-  - docker exec ct ./run.sh $PKG
-  - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
-  - docker exec ct ./prepare.sh
+- env >build.env
+- docker run -d --env-file build.env --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
+- docker exec ct ./prepare.sh
+script: docker exec ct ./run.sh $PKG
 before_deploy:
 - handle_deploy
 deploy:
@@ -42,5 +25,19 @@ deploy:
   - "${PKG}.sum"
   on:
     tags: true
+    condition: $(find ${PKG}*.tar 2>/dev/null | wc -l) -gt 0
 after_deploy:
 - switch_release_tag $TRAVIS_REPO_SLUG $TRAVIS_TAG $PKG
+- skip_remaining_jobs
+- cleanup_stage
+jobs:
+  include:
+  - stage: "1"
+    env:
+    - STAGE=1
+  - stage: "2"
+    env:
+    - STAGE=2
+  - stage: "3"
+    env:
+    - STAGE=3

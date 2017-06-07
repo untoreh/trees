@@ -1,0 +1,66 @@
+#!/bin/bash
+
+source functions.sh
+
+rem_repo="untoreh/trees"
+repo_path=$(./fetch-alp-tree.sh | tail -1)
+repo_local="${PWD}/lrepo"
+ref="trunk"
+pkg="tidb"
+pkg_ctl="tidb_ctl"
+artifact="tidb-latest-linux-amd64"
+
+## copy repo to local filesystem to allow checkout through hardlinks
+rm -rf $repo_local
+cp -a $repo_path $repo_local
+
+## build app trees 
+for d in $pkg $pkg_ctl; do
+    rm -rf ${d}-lo
+    ostree checkout --repo=${repo_local} -H ${ref} ${d}-lo
+    mount_over $d
+done
+
+fetch_artifact http://download.pingcap.org/${artifact}.tar.gz artf -4
+for b in pd-server tidb-server tikv-server; do
+    mv artf/${artifact}/bin/${b} ${pkg}/usr/bin
+done
+wrap_rootfs ${pkg}
+for b in goyacc pd-ctl pd-recover pd-tso-bench tikv-ctl; do
+    mv artf/${artifact}/bin/${b} ${pkg_ctl}/usr/bin
+done
+wrap_rootfs ${pkg_ctl}
+
+for d in $pkg $pkg_ctl; do
+    ## commit tree to app branch
+    rev=$(ostree --repo=${repo_local} commit -s "$(date)-${d}-build" \
+        --skip-if-unchanged --link-checkout-speedup -b ${d} ${d})
+
+    ## get the last app checksum from remote
+    old_csum=$(fetch_artifact $rem_repo ${d}.sum -)
+    ## get checksum of committed branch
+    new_csum=$(ostree --repo=${repo_local} ls ${d} -Cd | awk '{print $5}')
+    ## end if unchanged
+    compare_csums
+
+    ## create delta of app branch
+    ostree --repo=${repo_local} static-delta generate --from=${ref} ${d} \
+        --inline --min-fallback-size 0 --filename=${rev}
+
+    ## checksum and compress
+    echo $new_csum >${d}.sum
+    tar cvf ${d}.tar ${rev}
+
+    ## -- ovz --
+    repo_local=$(./fetch-alp_ovz-tree.sh | tail -1)
+    ## commit tree to app branch
+    rev=$(ostree --repo=${repo_local} commit -s "$(date)-${d}-build" \
+        --skip-if-unchanged --link-checkout-speedup -b ${d} ${d})
+    ## skip csum comparison, if bare image is different so is ovz
+    ## create delta of app branch
+    ostree --repo=${repo_local} static-delta generate --from=${ref} ${d} \
+        --inline --min-fallback-size 0 --filename=${rev}
+
+    ## compress
+    tar cvf ${d}_ovz.tar ${rev}
+done

@@ -1,3 +1,3 @@
-etcd:pine
-hhvm:trub
-nginx:pine
+etcd:pine,1
+hhvm:trub,1
+nginx:pine,2

@@ -5,7 +5,7 @@ source functions.sh
 cat << EOF >>/etc/apk/repositories
 http://dl-cdn.alpinelinux.org/alpine/edge/testing
 EOF
-
+sync
 apk add --update-cache  \
  bash  \
  wget  \
