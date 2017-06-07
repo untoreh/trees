@@ -10,9 +10,8 @@ pkg="nginx"
 pwd=$PWD
 modulesp="$pwd/apps/$pkg/modules"
 patchesp="$pwd/apps/$pkg/patches"
-outp="out/$pkg"
-# jobs=$(cat /proc/cpuinfo | grep processor | wc -l || 1)
-jobs=4
+outp="$pwd/out/$pkg"
+jobs=$(($(cat /proc/cpuinfo | grep processor | wc -l || 1)*2))
 
 ## prepare deps
 apk add sudo git apache2-dev alpine-sdk python apr-dev apr-util-dev \
@@ -87,6 +86,7 @@ CFLAGS="-I/usr/include/apr-1 -I/home/b/libpng-$LPNG_VERSION -fPIC \
 cd $pwd
 wget https://github.com/pagespeed/ngx_pagespeed/archive/v${NPS_VERSION}-beta.zip
 unzip v${NPS_VERSION}-beta.zip
+MOD_PAGESPEED_DIR=$pwd/modpagespeed-$NPS_VERSION/src
 cd ngx_pagespeed-${NPS_VERSION}-beta/
 mkdir -p psol
 mkdir -p psol/lib/Release/linux/x64
@@ -107,7 +107,7 @@ cd nginx-${NGINX_VERSION}
 ## custom image filter module
 mv $modulesp/ngx_http_image_filter_module.c src/http/modules
 
-LD_LIBRARY_PATH=/usr/lib
+LD_LIBRARY_PATH=/usr/lib \
 ./configure \
 --prefix=/usr/share/nginx \
 --sbin-path=/usr/sbin/nginx \
@@ -162,6 +162,7 @@ cp objs/nginx \
     /usr/lib/libpng12.so.0 \
     $outp
 
+cd $pwd
 ## copy repo to local filesystem to allow checkout through hardlinks
 rm -rf $repo_local
 cp -a $repo_path $repo_local
@@ -169,7 +170,7 @@ cp -a $repo_path $repo_local
 ## build app tree
 prepare_rootfs $pkg
 apkc $pkg add $pkg libgd icu apr-util
-mkdir -p $pkg/usr//modules
+mkdir -p $pkg/usr/lib/modules
 mv $outp/nginx $pkg/usr/sbin
 mv $outp/*.so* $pkg/usr/lib
 wrap_rootfs $pkg

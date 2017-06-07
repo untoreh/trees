@@ -217,11 +217,7 @@ apkc() {
     shift
     mkdir -p ${apkrepos}
     if [ ! -f "${apkrepos}/repositories" ]; then
-        cat <<EOF >${apkrepos}/repositories
-http://dl-cdn.alpinelinux.org/alpine/latest-stable/main
-http://dl-cdn.alpinelinux.org/alpine/latest-stable/community
-http://dl-cdn.alpinelinux.org/alpine/edge/testing
-EOF
+        cp /etc/apk/repositories ${apkrepos}
         initdb="--initdb"
     fi
     apk --arch x86_64 --allow-untrusted --root ${root_path} $initdb --no-cache $@
