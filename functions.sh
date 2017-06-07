@@ -7,6 +7,9 @@ cf="\033[0m"
 printc() {
     echo -e "${cn}${@}${cf}"
 }
+err() {
+    echo $@ 1>&2
+}
 rse()
 {
     ((eval $(for phrase in "$@"; do echo -n "'$phrase' "; done)) 3>&1 1>&2 2>&3 | sed -e "s/^\(.*\)$/$(echo -en \\033)[31;1m\1$(echo -en \\033)[0m/") 3>&1 1>&2 2>&3
@@ -117,8 +120,8 @@ last_release_date() {
 ## $1 release date
 ## $2 time span eg "7 days ago"
 release_older_than() {
-    if [ $(echo -n $1 | wc -c) != 14 ]; then
-        echo "wrong date to compare".
+    if [ $(echo -n $1 | wc -c) != 14 -a "$1" != 0 ]; then
+        err  "wrong date to compare"
     fi
     release_d=$1
     span_d=$(date --date="$2" +%Y%m%d%H%M%S)
@@ -127,6 +130,17 @@ release_older_than() {
     else
         return 1
     fi
+}
+
+## get mostly local vars
+diff_env(){
+    bash -cl 'set -o posix && set >/tmp/clean.env'
+    set -o posix && set && set +o posix >/tmp/local.env
+    diff /tmp/clean.env \
+        /tmp/local.env | \
+        grep -E "^>|^\+" | \
+        grep -Ev "^(>|\+|\+\+) ?(BASH|COLUMNS|LINES|HIST|PPID|SHLVL|PS(1|2)|SHELL|FUNC)" | \
+        sed -r 's/^> ?|^\+ ?//'
 }
 
 ## $1 repo:tag
@@ -138,32 +152,83 @@ fetch_artifact() {
         artf=$(basename $art_url)
         dest="$2"
     else
-        local repo_fetch=${1/:*/} repo_tag=${1/*:/}
-        [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=latest || repo_tag=tags/$repo_tag
+        local repo_fetch=${1/:*/} repo_tag=${1/*:/} draft= opts=
+        [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=/latest || repo_tag=/tags/$repo_tag
+        [ "$repo_tag" = "/tags/draft" ] && repo_tag=$gh_token && draft=true
         artf="$2"
-        art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases/${repo_tag} \
-            | grep browser_download_url | grep ${artf} | head -n 1 | cut -d '"' -f 4)
+        if [ -n "$draft" ]; then
+            art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases${repo_tag} \
+                | grep "${artf}" -B 3 | grep '"url"' | head -n 1 | cut -d '"' -f 4)${gh_token}
+            trap "unset -f wget" SIGINT SIGTERM SIGKILL SIGHUP RETURN EXIT
+            wget(){ /usr/bin/wget --header "Accept: application/octet-stream" $@; }
+        else
+            art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases${repo_tag} \
+                | grep browser_download_url | grep ${artf} | head -n 1 | cut -d '"' -f 4)
+        fi
         dest="$3"
     fi
-    [ -z "$(echo "$art_url" | grep "://")" ] && echo "no url found" && return 1
+    [ -z "$(echo "$art_url" | grep "://")" ] && err "no url found" && return 1
     ## if no destination dir stream to stdo
-    if [ "$dest" = "-" ]; then
+    case "$dest" in
+        "-")
         wget $art_url -qO-
-    else
+        ;;
+        "-q")
+        return 0
+        ;;
+        *)
         mkdir -p $dest
-        if [ $(echo "$artf" | grep -E "gz|tgz|xz|7z") ]; then
-            wget $art_url -qO- | tar xzf - -C $dest
+        if [ $(echo "$artf" | grep -E "(gz|tgz|xz|7z)$") ]; then
+            wget $opts $art_url -qO- | tar xzf - -C $dest
         else
-            if [ $(echo "$artf" | grep -E "zip") ]; then
-                wget $art_url -qO artifact.zip && unzip artifact.zip -d $dest
+            if [ $(echo "$artf" | grep -E "zip$") ]; then
+                wget $hader $art_url -qO artifact.zip && unzip artifact.zip -d $dest
                 rm artifact.zip
             else
-                wget $art_url -qO- | tar xf - -C $dest
+                if [ $(echo "$artf" | grep -E "bz2$") ]; then
+                    wget $opts $art_url -qO- | tar xjf - -C $dest
+                else
+                    wget $opts $art_url -qO- | tar xf - -C $dest
+                fi
             fi
         fi
-    fi
+    esac
 }
 
+## $@ files/folders
+export_stage(){
+    [ -z "$pkg" -o -z "$STAGE" ] && err "pkg or STAGE undefined, terminating" && exit 1
+	which hub &>/dev/null || get_hub
+	diff_env >stage.env
+	tar czf ${pkg}_stage_${STAGE}.tgz stage.env $@
+
+	hub release edit -d -a ${pkg}_stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage || \
+	hub release create -d -a ${pkg}_stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage
+}
+
+## $1 repo 
+import_stage(){
+    [ -z "$pkg" -o -z "$STAGE" -o -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
+    PREV_STAGE=$((STAGE - 1))
+    fetch_artifact ${1}:draft ${pkg}_stage_${PREV_STAGE}.tgz $PWD
+	source stage.env || cat stage.env | tail +2 > stage1.env && source stage1.env
+}
+
+## $1 repo
+check_skip_stage(){
+    [ -n "$PKG" ] && pkg=$PKG
+    [ -z "$pkg" -o -z "$STAGE" -o -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
+    fetch_artifact ${1}:draft ${pkg}_stage_$STAGE.tgz -q && return 0 || return 1
+}
+
+## $1 repo
+cleanup_stage(){
+    [ -z "$pkg" ] && pkg=$PKG
+    [ -z "$pkg" ] && err "pkg undefined, terminating" && exit 1
+	which github-release &>/dev/null || get_ghr
+    local u=${1/\/*} r=${1/*\/}
+    github-release delete -u $u -r $r -t ${pkg}_stage
+}
 ## $1 image file path
 ## $2 mount target
 ## mount image, ${lon} populated with loop device number
@@ -230,12 +295,7 @@ prepare_rootfs() {
     mkdir ${1}
     cd $1
     mkdir -p var var/cache/apk usr/lib usr/bin usr/sbin usr/etc
-    for l in usr/etc,etc usr/lib,lib usr/lib,lib64 usr/bin,bin usr/sbin,sbin; do
-        IFS=','
-        set -- $l
-        ln -sr $1 $2
-        unset IFS
-    done
+    mkdir -p etc lib lib64 bin sbin
     cd -
 }
 
@@ -243,10 +303,18 @@ prepare_rootfs() {
 ## routing after-modification actions for ostree checkouts
 wrap_rootfs() {
     [ -z "$1" ] && (
-        echo "no target directory provided to wrap_rootfs"
+        err "no target directory provided to wrap_rootfs"
         exit 1
     )
     cd ${1}
+    for l in usr/etc,etc usr/lib,lib usr/lib,lib64 usr/bin,bin usr/sbin,sbin; do
+        IFS=','
+        set -- $l
+        cp -a --remove-destination ${2}/* ${1}
+        rm -rf $2
+        ln -sr $1 $2
+        unset IFS
+    done
     rm -rf var/cache/apk/*
     umount -Rf dev proc sys run &>/dev/null
     rm -rf dev proc sys run
@@ -279,6 +347,22 @@ compare_csums() {
         echo $pkg >>file.up
         exit
     fi
+}
+
+## fetch github hub bin
+get_hub() {
+    mkdir -p /opt/bin
+    fetch_artifact github/hub:v2.3.0-pre9 "linux-amd64.*.tgz" $PWD
+    mv $(find -name hub -print -quit) /opt/bin
+    export GITHUB_TOKEN=$GIT_TOKEN PATH=/opt/bin:$PATH
+}
+
+## fetch github-release
+get_ghr() {
+    mkdir -p /opt/bin
+    fetch_artifact aktau/github-release ".*linux-amd64.*.bz2" $PWD
+    mv $(find -name github-release -print -quit) /opt/bin
+    export GITHUB_TOKEN=$GIT_TOKEN PATH=/opt/bin:$PATH
 }
 
 install_glib() {

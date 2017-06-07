@@ -3,6 +3,7 @@
 gem install travis
 source functions.sh
 user=untoreh
+appslist=appslist
 repo_rem=untoreh/trees
 repo_rem_url="https://${GIT_USER}:${GIT_TOKEN}@github.com/$repo_rem"
 
@@ -16,7 +17,9 @@ handle_build() {
 	## tags format is ${PKG}-YY.MM-X
 	PKG=${TRAVIS_TAG/-*/}
 	if [ -n "$PKG" ]; then
-		BAS=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
+		BST=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
+		BAS=${BST/,*}
+		STAGES=${BST/*,}
 	fi
 	## skip build if 
 	## - the tag was not pushed by base repo (to rebuild all the dependents)
@@ -24,10 +27,28 @@ handle_build() {
 	## - it is not older than 1 week
 	pkg_d=$(last_release_date $repo_rem $PKG)
 	bas_d=$(last_release_date $user/$BAS)
-	week_old=$(release_older_than $pkg_d "7 days ago")
+	week_old=$(release_older_than $pkg_d "7 days ago" && echo true)
 	if [ "$PKG" != "$BAS" -a $bas_d -le $pkg_d -a ! "$week_old" ]; then
 		printc "$PKG was recently built."
 		TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER:-$TRAVIS_BUILD_NUMBER}
+		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+		sleep 3600
+	fi
+	## skip non defined stages for PKG
+	if [ -n "$PKG" -a -n "$STAGES" -a $STAGE -gt $STAGES ]; then
+		printc "skipping PKG undefined stages"
+		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+		sleep 3600
+	fi
+	## if not a package build, only STAGE1 is allowed
+	if [ -z "$PKG" -o "$PKG" = "$BAS" -a $STAGE != 1 ]; then
+		printc "skipping non PKG extra stages"
+		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+		sleep 3600
+	fi
+	## skip if an artifact for this stage is already staged
+	if check_skip_stage $TRAVIS_REPO_SLUG; then
+		printc "job has staged artifacts, skipping."
 		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
 		sleep 3600
 	fi
@@ -60,4 +81,16 @@ handle_deploy() {
 		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
 		sleep 3600
 	fi
+}
+
+skip_remaining_jobs() {
+	r_jobs=$(travis show $TRAVIS_BUILD_NUMBER | \
+		awk '/^#'$TRAVIS_JOB_NUMBER'/,EOF{
+		getline; print gensub(/.*('$TRAVIS_BUILD_NUMBER'\.[0-9]+).*/,"\\1","g")
+		}')
+	IFS=" "
+	for j in $r_jobs; do
+		travis cancel $j --no-interactive -t $TRAVIS_TOKEN
+	done
+	unset IFS
 }
