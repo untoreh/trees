@@ -8,21 +8,27 @@ env:
 install:
 - source travis-helper.sh
 - handle_build
-before_script:
-- docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
-- docker exec ct ./prepare.sh
 - stage: a
   env:
    - STAGE=a
-  script: docker exec ct ./run.sh $PKG
+  script: 
+  - docker exec ct ./run.sh $PKG
+  - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
+  - docker exec ct ./prepare.sh
 - stage: b
   env:
    - STAGE=b
-  script: docker exec ct ./run.sh $PKG
+  script: 
+  - docker exec ct ./run.sh $PKG
+  - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
+  - docker exec ct ./prepare.sh
 - stage: c
   env:
    - STAGE=c
-  script: docker exec ct ./run.sh $PKG
+  script: 
+  - docker exec ct ./run.sh $PKG
+  - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
+  - docker exec ct ./prepare.sh
 before_deploy:
 - handle_deploy
 deploy:
