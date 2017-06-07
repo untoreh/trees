@@ -11,7 +11,9 @@ install:
 - stage: a
   # env:
   #  - STAGE=a
-  script: docker pull alpine
+  script: 
+  - echo $PWD
+  - docker pull alpine
   # script: |
   #   docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
 #     docker exec ct ./prepare.sh
