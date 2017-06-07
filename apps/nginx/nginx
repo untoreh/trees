@@ -87,7 +87,7 @@ CFLAGS="-I/usr/include/apr-1 -I/home/b/libpng-$LPNG_VERSION -fPIC \
 cd $pwd
 wget https://github.com/pagespeed/ngx_pagespeed/archive/v${NPS_VERSION}-beta.zip
 unzip v${NPS_VERSION}-beta.zip
-MOD_PAGESPEED_DIR=$pwd/modpagespeed-$NPS_VERSION/src
+export MOD_PAGESPEED_DIR=$pwd/modpagespeed-$NPS_VERSION/src
 cd ngx_pagespeed-${NPS_VERSION}-beta/
 mkdir -p psol
 mkdir -p psol/lib/Release/linux/x64
@@ -97,8 +97,9 @@ ln -s $pwd/modpagespeed-$NPS_VERSION/src/net $pwd/ngx_pagespeed-${NPS_VERSION}-b
 ln -s $pwd/modpagespeed-$NPS_VERSION/src/testing $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
 ln -s $pwd/modpagespeed-$NPS_VERSION/src/pagespeed $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
 ln -s $pwd/modpagespeed-$NPS_VERSION/src/third_party $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
-ln -s  $pwd/modpagespeed-$NPS_VERSION/src/tools $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
+ln -s $pwd/modpagespeed-$NPS_VERSION/src/tools $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
 ln -s $pwd/modpagespeed-$NPS_VERSION/src/pagespeed/automatic/pagespeed_automatic.a $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/lib/Release/linux/x64/pagespeed_automatic.a
+ln -s $pwd/modpagespeed-$NPS_VERSION/src/url/base $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/third_party/chromium/src/googleurl/src
 cd -
 
 wget -q http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
