@@ -12,7 +12,7 @@ modulesp="$pwd/apps/$pkg/modules"
 patchesp="$pwd/apps/$pkg/patches"
 outp="$pwd/out/$pkg"
 # jobs=$(($(cat /proc/cpuinfo | grep processor | wc -l || 1)*2))
-jobs=4
+jobs=6
 
 ## prepare deps
 apk add sudo git apache2-dev alpine-sdk python apr-dev apr-util-dev \
