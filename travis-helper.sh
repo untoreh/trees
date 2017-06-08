@@ -3,6 +3,7 @@
 gem install travis
 source functions.sh
 user=untoreh
+appslist=appslist
 repo_rem=untoreh/trees
 repo_rem_url="https://${GIT_USER}:${GIT_TOKEN}@github.com/$repo_rem"
 
