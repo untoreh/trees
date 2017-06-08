@@ -139,7 +139,7 @@ fetch_artifact() {
         dest="$2"
     else
         local repo_fetch=${1/:*/} repo_tag=${1/*:/}
-        [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=/latest || repo_tag=tags/$repo_tag
+        [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=/latest || repo_tag=/tags/$repo_tag
         [ "$repo_tag" = "/draft" ] && repo_tag=$gh_token
         artf="$2"
         art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases${repo_tag} \
@@ -285,7 +285,7 @@ compare_csums() {
 ## fetch github hub bin
 get_hub() {
     mkdir -p /opt/bin
-    fetch_artifact github/hub:2.3.0-pre9 "linux-amd64.*.tgz" $PWD
+    fetch_artifact github/hub:v2.3.0-pre9 "linux-amd64.*.tgz" $PWD
     mv hub*/bin/hub /opt/bin
  	export GITHUB_TOKEN=$GIT_TOKEN PATH=/opt/bin:$PATH
 }
