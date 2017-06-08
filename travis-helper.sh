@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 gem install travis
 source functions.sh
