@@ -6,24 +6,24 @@ services:
 install:
 - source travis-helper.sh
 - handle_build
-stage: a
-- env:
+- stage: a
+  env:
   - STAGE=a
-- script: 
+  script: 
   - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
   - docker exec ct ./prepare.sh
   - docker exec ct ./run.sh $PKG
-stage: b
-- env:
+- stage: b
+  env:
   - STAGE=b
-- script: 
+  script: 
   - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
   - docker exec ct ./prepare.sh
   - docker exec ct ./run.sh $PKG
-stage: c
-- env:
+- stage: c
+  env:
   - STAGE=c
-- script: 
+  script: 
   - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
   - docker exec ct ./prepare.sh
   - docker exec ct ./run.sh $PKG
