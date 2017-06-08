@@ -3,8 +3,6 @@ sudo: false
 language: generic
 services:
 - docker
-env:
-- appslist=appslist
 install:
 - source travis-helper.sh
 - set -x

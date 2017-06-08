@@ -1,6 +1,7 @@
 #!/bin/sh
 
-PKG=$1
+export PKG=$1
+export appslist=appslist
 source functions.sh
 
 ## sanity
