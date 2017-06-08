@@ -4,7 +4,6 @@ source functions.sh
 artf_stage_1="stage_1.tgz"
 artf_stage_2="stage_2.tgz"
 artf_stage_3="stage_3.tgz"
-stage_${STAGE}
 
 stage_1() {
 	rem_repo="untoreh/trees"
@@ -232,3 +231,5 @@ stage_3() {
 	## compress
 	tar cvf ${pkg}_ovz.tar ${rev}
 }
+
+stage_${STAGE}
