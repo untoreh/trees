@@ -7,6 +7,7 @@ env:
 - appslist=appslist
 install:
 - source travis-helper.sh
+- set -x
 - handle_build
 stage: a
 env:
