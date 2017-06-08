@@ -1,10 +1,13 @@
 #!/bin/bash
 
 source functions.sh
+echo ${STAGES[1]}
+artf_stage_1="stage_1.tgz"
+artf_stage_2="stage_2.tgz"
+artf_stage_3="stage_3.tgz"
+stage_${STAGE}
 
-stage_$STAGE
-
-stage_a(){
+stage_1() {
 	rem_repo="untoreh/trees"
 	repo_path=$(./fetch-alp-tree.sh | tail -1)
 	repo_local="${PWD}/lrepo"
@@ -48,7 +51,8 @@ stage_a(){
 	cd -
 
 	## modpgs
-	minus=$(($(echo $NPS_VERSION | grep -o [0-9]$)-1)) ## effort to try previous minor version in case of hotfixes
+	vTail=$(echo $NPS_VERSION | grep -o [0-9]$)
+	minus=$((vTail - 1)) ## effort to try previous minor version in case of hotfixes
 	PREV_NPS_VERSION=${NPS_VERSION/%[0-9]/$minus}
 	wget https://dl.google.com/dl/linux/mod-pagespeed/tar/beta/mod-pagespeed-beta-$NPS_VERSION-r0.tar.bz2 \
 		|| wget https://dl.google.com/dl/linux/mod-pagespeed/tar/beta/mod-pagespeed-beta-$PREV_NPS_VERSION-r0.tar.bz2 \
@@ -76,142 +80,156 @@ stage_a(){
     -D_GLIBCXX_USE_CXX11_ABI=0 -march=native -D_GNU_SOURCE -Os -ffast-math \
     -ffunction-sections -fdata-sections -Wl,--gc-sections"
 
-    set -o posix && set > $pwd/stage.env
+	## export state
+	get_hub
+	set -o posix && set >stage.env
+	tar czf $artf_stage_a $pwd/libpng-$LPNG_VERSION $pwd/modpagespeed-$NPS_VERSION stage.env
+	hub release create -d -a $artf_stage_1 ${pkg}_stage
 }
 
-stage_b(){
-    source stage.env &>/dev/null
-    cd pagespeed/automatic/
-    make -j $jobs psol BUILDTYPE=Release LDFLAGS="-Wl,--gc-sections" \
-        CXXFLAGS="-I/usr/include/apr-1 -I/home/b/libpng-$LPNG_VERSION -fPIC \
+stage_2() {
+	## import state
+	get_hub
+	fetch_artifact ${rem_repo}:draft $artf_stage_1 ${pkg}_stage $PWD
+	source stage.env &>/dev/null
+
+	cd pagespeed/automatic/
+	make -j $jobs psol BUILDTYPE=Release LDFLAGS="-Wl,--gc-sections" \
+		CXXFLAGS="-I/usr/include/apr-1 -I/home/b/libpng-$LPNG_VERSION -fPIC \
     -D_GLIBCXX_USE_CXX11_ABI=0 -march=native -D_GNU_SOURCE -Os -ffast-math \
     -ffunction-sections -fdata-sections -Wl,--gc-sections" \
-        CFLAGS="-I/usr/include/apr-1 -I/home/b/libpng-$LPNG_VERSION -fPIC \
+		CFLAGS="-I/usr/include/apr-1 -I/home/b/libpng-$LPNG_VERSION -fPIC \
     -D_GLIBCXX_USE_CXX11_ABI=0 -march=native -D_GNU_SOURCE -Os -ffast-math \
     -ffunction-sections -fdata-sections -Wl,--gc-sections"
 
-    set -o posix && set > $pwd/stage.env
+	## export state
+	set -o posix && set >$pwd/stage.env
+	tar czf $artf_stage_a $pwd/libpng-$LPNG_VERSION $pwd/modpagespeed-$NPS_VERSION stage.env
+	hub release edit -d -a $artf_stage_2 ${pkg}_stage
 }
 
-stage_c(){
-    source stage.env &>/dev/null
-    ## ngxpgs
-    cd $pwd
-    wget https://github.com/pagespeed/ngx_pagespeed/archive/v${NPS_VERSION}-beta.zip
-    unzip v${NPS_VERSION}-beta.zip
-    export MOD_PAGESPEED_DIR=$pwd/modpagespeed-$NPS_VERSION/src
-    cd ngx_pagespeed-${NPS_VERSION}-beta/
-    mkdir -p psol
-    mkdir -p psol/lib/Release/linux/x64
-    mkdir -p psol/include/out/Release
-    ln -s $pwd/modpagespeed-$NPS_VERSION/src/out/Release/obj $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/out/Release/
-    ln -s $pwd/modpagespeed-$NPS_VERSION/src/net $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
-    ln -s $pwd/modpagespeed-$NPS_VERSION/src/testing $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
-    ln -s $pwd/modpagespeed-$NPS_VERSION/src/pagespeed $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
-    ln -s $pwd/modpagespeed-$NPS_VERSION/src/third_party $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
-    ln -s $pwd/modpagespeed-$NPS_VERSION/src/tools $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
-    ln -s $pwd/modpagespeed-$NPS_VERSION/src/pagespeed/automatic/pagespeed_automatic.a $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/lib/Release/linux/x64/pagespeed_automatic.a
-    ln -s $pwd/modpagespeed-$NPS_VERSION/src/url/base $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/third_party/chromium/src/googleurl/src
-    cd -
+stage_3() {
+	## import state
+	get_hub
+	fetch_artifact ${rem_repo}:draft $artf_stage_2 ${pkg}_stage $PWD
+	source stage.env &>/dev/null
+	## ngxpgs
+	cd $pwd
+	wget https://github.com/pagespeed/ngx_pagespeed/archive/v${NPS_VERSION}-beta.zip
+	unzip v${NPS_VERSION}-beta.zip
+	export MOD_PAGESPEED_DIR=$pwd/modpagespeed-$NPS_VERSION/src
+	cd ngx_pagespeed-${NPS_VERSION}-beta/
+	mkdir -p psol
+	mkdir -p psol/lib/Release/linux/x64
+	mkdir -p psol/include/out/Release
+	ln -s $pwd/modpagespeed-$NPS_VERSION/src/out/Release/obj $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/out/Release/
+	ln -s $pwd/modpagespeed-$NPS_VERSION/src/net $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
+	ln -s $pwd/modpagespeed-$NPS_VERSION/src/testing $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
+	ln -s $pwd/modpagespeed-$NPS_VERSION/src/pagespeed $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
+	ln -s $pwd/modpagespeed-$NPS_VERSION/src/third_party $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
+	ln -s $pwd/modpagespeed-$NPS_VERSION/src/tools $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/
+	ln -s $pwd/modpagespeed-$NPS_VERSION/src/pagespeed/automatic/pagespeed_automatic.a $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/lib/Release/linux/x64/pagespeed_automatic.a
+	ln -s $pwd/modpagespeed-$NPS_VERSION/src/url/base $pwd/ngx_pagespeed-${NPS_VERSION}-beta/psol/include/third_party/chromium/src/googleurl/src
+	cd -
 
-    wget -q http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
-    tar -zxf nginx-${NGINX_VERSION}.tar.gz
+	wget -q http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz
+	tar -zxf nginx-${NGINX_VERSION}.tar.gz
 
-    cd nginx-${NGINX_VERSION}
-    ## custom image filter module
-    mv $modulesp/ngx_http_image_filter_module.c src/http/modules
+	cd nginx-${NGINX_VERSION}
+	## custom image filter module
+	mv $modulesp/ngx_http_image_filter_module.c src/http/modules
 
-    LD_LIBRARY_PATH=/usr/lib \
-        ./configure \
-        --prefix=/usr/share/nginx \
-        --sbin-path=/usr/sbin/nginx \
-        --conf-path=/etc/nginx/nginx.conf \
-        --pid-path=/var/run/nginx/nginx.pid \
-        --lock-path=/var/run/nginx/nginx.lock \
-        --error-log-path=/var/log/nginx/error.log \
-        --http-log-path=/var/log/nginx/access.log \
-        --http-client-body-temp-path=/var/lib/nginx/tmp/client_body \
-        --http-proxy-temp-path=/var/lib/nginx/tmp/proxy \
-        --http-fastcgi-temp-path=/var/lib/nginx/tmp/fastcgi \
-        --http-uwsgi-temp-path=/var/lib/nginx/tmp/uwsgi \
-        --http-scgi-temp-path=/var/lib/nginx/tmp/scgi \
-        --user=nginx \
-        --group=nginx \
-        --with-file-aio \
-        --with-threads \
-        --with-http_ssl_module \
-        --with-http_v2_module \
-        --with-http_realip_module \
-        --with-http_addition_module \
-        --with-pcre-jit \
-        --with-http_sub_module \
-        --with-http_gunzip_module \
-        --with-http_gzip_static_module \
-        --with-http_random_index_module \
-        --with-http_secure_link_module \
-        --with-http_stub_status_module \
-        --with-http_auth_request_module \
-        --with-http_degradation_module \
-        --with-http_slice_module \
-        --with-http_image_filter_module=dynamic \
-        --with-mail \
-        --with-mail_ssl_module \
-        --add-module=../ngx_pagespeed-${NPS_VERSION}-beta \
-        --with-cc-opt="-flto -fPIC -I /usr/include/apr-1 -D_GNU_SOURCE -Os -ffast-math \
+	LD_LIBRARY_PATH=/usr/lib \
+		./configure \
+		--prefix=/usr/share/nginx \
+		--sbin-path=/usr/sbin/nginx \
+		--conf-path=/etc/nginx/nginx.conf \
+		--pid-path=/var/run/nginx/nginx.pid \
+		--lock-path=/var/run/nginx/nginx.lock \
+		--error-log-path=/var/log/nginx/error.log \
+		--http-log-path=/var/log/nginx/access.log \
+		--http-client-body-temp-path=/var/lib/nginx/tmp/client_body \
+		--http-proxy-temp-path=/var/lib/nginx/tmp/proxy \
+		--http-fastcgi-temp-path=/var/lib/nginx/tmp/fastcgi \
+		--http-uwsgi-temp-path=/var/lib/nginx/tmp/uwsgi \
+		--http-scgi-temp-path=/var/lib/nginx/tmp/scgi \
+		--user=nginx \
+		--group=nginx \
+		--with-file-aio \
+		--with-threads \
+		--with-http_ssl_module \
+		--with-http_v2_module \
+		--with-http_realip_module \
+		--with-http_addition_module \
+		--with-pcre-jit \
+		--with-http_sub_module \
+		--with-http_gunzip_module \
+		--with-http_gzip_static_module \
+		--with-http_random_index_module \
+		--with-http_secure_link_module \
+		--with-http_stub_status_module \
+		--with-http_auth_request_module \
+		--with-http_degradation_module \
+		--with-http_slice_module \
+		--with-http_image_filter_module=dynamic \
+		--with-mail \
+		--with-mail_ssl_module \
+		--add-module=../ngx_pagespeed-${NPS_VERSION}-beta \
+		--with-cc-opt="-flto -fPIC -I /usr/include/apr-1 -D_GNU_SOURCE -Os -ffast-math \
         -ffunction-sections -fdata-sections" \
-        --with-ld-opt="-Wl,--gc-sections -luuid -lapr-1 -laprutil-1 -licudata -licuuc \
+		--with-ld-opt="-Wl,--gc-sections -luuid -lapr-1 -laprutil-1 -licudata -licuuc \
         -L$pkgdir/usr/lib -lpng12 -lturbojpeg -ljpeg"
 
-    make -j $jobs
-    mkdir -p $outp
-    strip -s -R .comment -R .gnu.version --strip-unneeded objs/nginx
-    cp objs/nginx \
-        objs/ngx_http_image_filter_module.so \
-        /usr/lib/libpng12.so.0 \
-        $outp
+	make -j $jobs
+	mkdir -p $outp
+	strip -s -R .comment -R .gnu.version --strip-unneeded objs/nginx
+	cp objs/nginx \
+		objs/ngx_http_image_filter_module.so \
+		/usr/lib/libpng12.so.0 \
+		$outp
 
-    cd $pwd
-    ## copy repo to local filesystem to allow checkout through hardlinks
-    rm -rf $repo_local
-    cp -a $repo_path $repo_local
+	cd $pwd
+	## copy repo to local filesystem to allow checkout through hardlinks
+	rm -rf $repo_local
+	cp -a $repo_path $repo_local
 
-    ## build app tree
-    prepare_rootfs $pkg
-    apkc $pkg add $pkg libgd icu apr-util
-    mkdir -p $pkg/usr/lib/modules
-    mv $outp/nginx $pkg/usr/sbin
-    mv $outp/*.so* $pkg/usr/lib
-    wrap_rootfs $pkg
+	## build app tree
+	prepare_rootfs $pkg
+	apkc $pkg add $pkg libgd icu apr-util
+	mkdir -p $pkg/usr/lib/modules
+	mv $outp/nginx $pkg/usr/sbin
+	mv $outp/*.so* $pkg/usr/lib
+	wrap_rootfs $pkg
 
-    ## commit tree to app branch
-    rev=$(ostree --repo=$repo_local commit -s "$(date)-${pkg}-build" \
-        --skip-if-unchanged --link-checkout-speedup -b $pkg $pkg)
+	## commit tree to app branch
+	rev=$(ostree --repo=$repo_local commit -s "$(date)-${pkg}-build" \
+		--skip-if-unchanged --link-checkout-speedup -b $pkg $pkg)
 
-    ## get the last app checksum from remote
-    old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
-    ## get checksum of committed branch
-    new_csum=$(ostree --repo=$repo_local ls $pkg -Cd | awk '{print $5}')
-    ## end if unchanged
-    compare_csums
+	## get the last app checksum from remote
+	old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
+	## get checksum of committed branch
+	new_csum=$(ostree --repo=$repo_local ls $pkg -Cd | awk '{print $5}')
+	## end if unchanged
+	compare_csums
 
-    ## create delta of app branch
-    ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
-        --inline --min-fallback-size 0 --filename=${rev}
+	## create delta of app branch
+	ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
+		--inline --min-fallback-size 0 --filename=${rev}
 
-    ## checksum and compress
-    echo $new_csum >${pkg}.sum
-    tar cvf ${pkg}.tar ${rev}
+	## checksum and compress
+	echo $new_csum >${pkg}.sum
+	tar cvf ${pkg}.tar ${rev}
 
-    ## -- ovz --
-    repo_local=$(./fetch-alp_ovz-tree.sh | tail -1)
-    ## commit tree to app branch
-    rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
-        --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
-    ## skip csum comparison, if bare image is different so is ovz
-    ## create delta of app branch
-    ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
-        --inline --min-fallback-size 0 --filename=${rev}
+	## -- ovz --
+	repo_local=$(./fetch-alp_ovz-tree.sh | tail -1)
+	## commit tree to app branch
+	rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
+		--skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
+	## skip csum comparison, if bare image is different so is ovz
+	## create delta of app branch
+	ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
+		--inline --min-fallback-size 0 --filename=${rev}
 
-    ## compress
-    tar cvf ${pkg}_ovz.tar ${rev}
+	## compress
+	tar cvf ${pkg}_ovz.tar ${rev}
 }

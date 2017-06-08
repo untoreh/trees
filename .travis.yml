@@ -3,45 +3,48 @@ sudo: false
 language: generic
 services:
 - docker
+env:
+- STAGES=(1 2 3)
 install:
 - source travis-helper.sh
 - handle_build
 jobs:
   include:
-  - stage: a
+  - stage: 1
     env:
-    - STAGE=a
-    script: 
-    - env
-    - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
-    - docker exec ct ./prepare.sh
-    - docker exec ct ./run.sh $PKG
-  - stage: b
-    env:
-    - STAGE=b
+    - STAGE=1
     script: 
     - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
     - docker exec ct ./prepare.sh
     - docker exec ct ./run.sh $PKG
-  - stage: c
+  - stage: 2
     env:
-    - STAGE=c
+    - STAGE=2
     script: 
     - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
     - docker exec ct ./prepare.sh
     - docker exec ct ./run.sh $PKG
-before_deploy:
-- handle_deploy
-deploy:
-  provider: releases
-  api_key:
-    secure: RkWrNY2ej0d1f25BQTySI6lAqQJYPWQeHmns4B6QdFAG0LZveh02mGVBY9Jf+GzKM2+B/kFjCbLbCReeRfZ+rp3+0xwjMmRgCiaP76Ru5VpJ78obZXOwEFVU9NEIptqrxTK5GsXLuKIva3jN65sY4R89VPlnyS+WDHP3USnVD9WEPfvZ4yCRKVpVQSlffY3FhNHkE76RDjZbouVifldEmzjUNCTjpPYJEK/26cYPpZv4Y1usZV20XBckn1JTLHKYCqFw4NQEej5pp8FeUVoaY45hupj7XMsSEEyjqGjwi1HBKXZDMO5j0w7RuFF0PU2HdHiQgQuG4ejDuDz/Tj7UDRcDs6+AHjNk+hyEb2Y0ywrXoLqtAyEU0tD0Lr/m/77dmJogADpqt744VZCYD9fprE45m+DfiVnCiBE2w0eQ6sOShzefqfJPu1QrhXjoCsjsHx6lQuZx5otx1BFtYjST5NtpDuwtFmfkIz+mE7ySYG2tw9W99xcwqN277lc1sVDErkCb6XUhZv6A6nO79QZ9RWMG1MB0xdJsip2B1IRdcIaZw+6TMR5Cxa3tZVwA+KeVu8DbfDfkuDR3G29/fkaA7jQL7gDZxd6LbD41N/RsYqU2OFRSQ6D6cMKzGvA0X3RVJe61yReLOCDy4feJC5iOfWcmeWOASOAut6Me1DQdycY=
-  skip_cleanup: true
-  file_glob: true
-  file:
-  - "${PKG}*.tar"
-  - "${PKG}.sum"
-  on:
-    tags: true
-after_deploy:
-- switch_release_tag $TRAVIS_REPO_SLUG $TRAVIS_TAG $PKG
+  - stage: 3
+    env:
+    - STAGE=3
+    script: 
+    - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
+    - docker exec ct ./prepare.sh
+    - docker exec ct ./run.sh $PKG
+  - stage: deploy
+  before_deploy:
+  - handle_deploy
+  deploy:
+    provider: releases
+    api_key:
+      secure: RkWrNY2ej0d1f25BQTySI6lAqQJYPWQeHmns4B6QdFAG0LZveh02mGVBY9Jf+GzKM2+B/kFjCbLbCReeRfZ+rp3+0xwjMmRgCiaP76Ru5VpJ78obZXOwEFVU9NEIptqrxTK5GsXLuKIva3jN65sY4R89VPlnyS+WDHP3USnVD9WEPfvZ4yCRKVpVQSlffY3FhNHkE76RDjZbouVifldEmzjUNCTjpPYJEK/26cYPpZv4Y1usZV20XBckn1JTLHKYCqFw4NQEej5pp8FeUVoaY45hupj7XMsSEEyjqGjwi1HBKXZDMO5j0w7RuFF0PU2HdHiQgQuG4ejDuDz/Tj7UDRcDs6+AHjNk+hyEb2Y0ywrXoLqtAyEU0tD0Lr/m/77dmJogADpqt744VZCYD9fprE45m+DfiVnCiBE2w0eQ6sOShzefqfJPu1QrhXjoCsjsHx6lQuZx5otx1BFtYjST5NtpDuwtFmfkIz+mE7ySYG2tw9W99xcwqN277lc1sVDErkCb6XUhZv6A6nO79QZ9RWMG1MB0xdJsip2B1IRdcIaZw+6TMR5Cxa3tZVwA+KeVu8DbfDfkuDR3G29/fkaA7jQL7gDZxd6LbD41N/RsYqU2OFRSQ6D6cMKzGvA0X3RVJe61yReLOCDy4feJC5iOfWcmeWOASOAut6Me1DQdycY=
+    skip_cleanup: true
+    file_glob: true
+    file:
+    - "${PKG}*.tar"
+    - "${PKG}.sum"
+    on:
+      tags: true
+      condition: [ -f "${PKG}.sum" ]
+  after_deploy:
+  - switch_release_tag $TRAVIS_REPO_SLUG $TRAVIS_TAG $PKG

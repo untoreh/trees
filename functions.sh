@@ -139,9 +139,10 @@ fetch_artifact() {
         dest="$2"
     else
         local repo_fetch=${1/:*/} repo_tag=${1/*:/}
-        [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=latest || repo_tag=tags/$repo_tag
+        [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=/latest || repo_tag=tags/$repo_tag
+        [ "$repo_tag" = "/draft" ] && repo_tag=$gh_token
         artf="$2"
-        art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases/${repo_tag} \
+        art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases${repo_tag} \
             | grep browser_download_url | grep ${artf} | head -n 1 | cut -d '"' -f 4)
         dest="$3"
     fi
@@ -279,6 +280,14 @@ compare_csums() {
         echo $pkg >>file.up
         exit
     fi
+}
+
+## fetch github hub bin
+get_hub() {
+    mkdir -p /opt/bin
+    fetch_artifact github/hub:2.3.0-pre9 "linux-amd64.*.tgz" $PWD
+    mv hub*/bin/hub /opt/bin
+ 	export GITHUB_TOKEN=$GIT_TOKEN PATH=/opt/bin:$PATH
 }
 
 install_glib() {
