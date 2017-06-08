@@ -1,16 +1,16 @@
 #!/bin/bash
 
 source functions.sh
+
+rem_repo="untoreh/trees"
+pkg="nginx"
 artf_stage_1="stage_1.tgz"
 artf_stage_2="stage_2.tgz"
-artf_stage_3="stage_3.tgz"
 
 stage_1() {
-	rem_repo="untoreh/trees"
-	repo_path=$(./fetch-alp-tree.sh | tail -1)
+    repo_path=$(./fetch-alp-tree.sh | tail -1)
 	repo_local="${PWD}/lrepo"
 	ref="trunk"
-	pkg="nginx"
 	pwd=$PWD
 	modulesp="$pwd/apps/$pkg/modules"
 	patchesp="$pwd/apps/$pkg/patches"
@@ -28,6 +28,9 @@ stage_1() {
 	NGINX_VERSION=$(last_version nginx/nginx | grep -oE "[0-9.]+")
 	LPNG_VERSION=1.2.56
 	LPNG_LIB=libpng12
+
+	## skip if artifact is staged
+	fetch_artifact $rem_repo:draft $artf_stage_1 -q && exit
 
 	## libpng
 	wget -q https://sourceforge.net/projects/libpng/files/$LPNG_LIB/$LPNG_VERSION/libpng-$LPNG_VERSION.tar.gz
@@ -79,7 +82,7 @@ stage_1() {
     -ffunction-sections -fdata-sections -Wl,--gc-sections"
 
 	## export state
-    cd $pwd
+	cd $pwd
 	get_hub
 	set -o posix && set >stage.env
 	tar czf $artf_stage_1 libpng-$LPNG_VERSION modpagespeed-$NPS_VERSION stage.env
@@ -102,7 +105,7 @@ stage_2() {
     -ffunction-sections -fdata-sections -Wl,--gc-sections"
 
 	## export state
-    cd $pwd
+	cd $pwd
 	set -o posix && set >$pwd/stage.env
 	tar czf $artf_stage_2 libpng-$LPNG_VERSION modpagespeed-$NPS_VERSION stage.env
 	hub release edit -d -a $artf_stage_2 ${pkg}_stage

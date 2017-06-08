@@ -146,11 +146,16 @@ fetch_artifact() {
             | grep browser_download_url | grep ${artf} | head -n 1 | cut -d '"' -f 4)
         dest="$3"
     fi
-    [ -z "$(echo "$art_url" | grep "://")" ] && echo "no url found" && return 1
+    [ -z "$(echo "$art_url" | grep "://")" ] && echo "no url found" 1>&2 && return 1
     ## if no destination dir stream to stdo
-    if [ "$dest" = "-" ]; then
+    case "$dest" in
+        "-")
         wget $art_url -qO-
-    else
+        ;;
+        "-q")
+        return 0
+        ;;
+        *)
         mkdir -p $dest
         if [ $(echo "$artf" | grep -E "gz|tgz|xz|7z") ]; then
             wget $art_url -qO- | tar xzf - -C $dest
@@ -162,7 +167,7 @@ fetch_artifact() {
                 wget $art_url -qO- | tar xf - -C $dest
             fi
         fi
-    fi
+    esac
 }
 
 ## $1 image file path
