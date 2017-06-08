@@ -1,7 +1,6 @@
 #!/bin/bash
 
 source functions.sh
-echo ${STAGES[1]}
 artf_stage_1="stage_1.tgz"
 artf_stage_2="stage_2.tgz"
 artf_stage_3="stage_3.tgz"
