@@ -10,21 +10,21 @@ install:
 - handle_build
 jobs:
   include:
-  - stage: 1
+  - stage: "1"
     env:
     - STAGE=1
     script: 
     - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
     - docker exec ct ./prepare.sh
     - docker exec ct ./run.sh $PKG
-  - stage: 2
+  - stage: "2"
     env:
     - STAGE=2
     script: 
     - docker run -d --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
     - docker exec ct ./prepare.sh
     - docker exec ct ./run.sh $PKG
-  - stage: 3
+  - stage: "3"
     env:
     - STAGE=3
     script: 
