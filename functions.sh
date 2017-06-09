@@ -135,7 +135,7 @@ diff_env(){
     set -o posix && set >/tmp/local.env && set +o posix
 
     diff /tmp/clean.env /tmp/local.env | grep -E "^>|^\+" | \
-        grep -Ev "^(>|\+) ?(BASH|COLUMNS|LINES|HIST|PPID|SHLVL|PS(1|2)|SHELL|FUNC)" | \
+        grep -Ev "^(>|\+|\+\+) ?(BASH|COLUMNS|LINES|HIST|PPID|SHLVL|PS(1|2)|SHELL|FUNC)?" | \
         sed -r 's/^> ?|^\+ ?//'
 }
 
