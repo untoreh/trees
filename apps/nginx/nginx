@@ -84,7 +84,7 @@ stage_1() {
 	## export state
 	cd $pwd
 	get_hub
-	set -o posix && set >stage.env
+	diff_env >stage.env
 	tar czf $artf_stage_1 libpng-$LPNG_VERSION modpagespeed-$NPS_VERSION stage.env
 	hub release create -d -a $artf_stage_1 -m "${pkg}_stage" ${pkg}_stage
 }
@@ -106,7 +106,7 @@ stage_2() {
 
 	## export state
 	cd $pwd
-	set -o posix && set >$pwd/stage.env
+	diff_env >$pwd/stage.env
 	tar czf $artf_stage_2 libpng-$LPNG_VERSION modpagespeed-$NPS_VERSION stage.env
 	hub release edit -d -a $artf_stage_2 ${pkg}_stage
 }
