@@ -93,6 +93,7 @@ stage_2() {
 	## import state
 	get_hub
 	fetch_artifact ${rem_repo}:draft $artf_stage_1 $PWD
+    cat stage.env
 	source stage.env
 
 	cd $pwd/modpagespeed-$NPS_VERSION/pagespeed/automatic/
