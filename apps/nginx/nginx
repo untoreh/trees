@@ -5,7 +5,6 @@ source functions.sh
 rem_repo="untoreh/trees"
 pkg="nginx"
 artf_stage_1="stage_1.tgz"
-artf_stage_2="stage_2.tgz"
 
 ## prepare deps
 apk add sudo git apache2-dev alpine-sdk python apr-dev apr-util-dev \
@@ -110,18 +109,6 @@ stage_2() {
     -D_GLIBCXX_USE_CXX11_ABI=0 -march=native -D_GNU_SOURCE -Os -ffast-math \
     -ffunction-sections -fdata-sections -Wl,--gc-sections"
 
-	## export state
-	cd $pwd
-	diff_env >$pwd/stage.env
-	tar czf $artf_stage_2 libpng-$LPNG_VERSION modpagespeed-$NPS_VERSION stage.env
-	hub release edit -d -a $artf_stage_2 ${pkg}_stage
-}
-
-stage_3() {
-	## import state
-	get_hub
-	fetch_artifact ${rem_repo}:draft $artf_stage_2 $PWD
-	source stage.env &>/dev/null
 	## ngxpgs
 	cd $pwd
 	wget https://github.com/pagespeed/ngx_pagespeed/archive/v${NPS_VERSION}-beta.zip
