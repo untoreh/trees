@@ -34,6 +34,12 @@ handle_build() {
 		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
 		sleep 3600
 	fi
+	## skip non defined stages for PKG
+	if [ -n "$PKG" -a -n "$STAGES" -a $STAGE -gt $STAGES ]; then
+		printc "skipping PKG undefined stages"
+		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+		sleep 3600
+	fi
 	## if not a package build, only STAGE1 is allowed
 	if [ -z "$PKG" -o "$PKG" = "$BAS" -a $STAGE != 1 ]; then
 		printc "skipping non PKG extra stages"
