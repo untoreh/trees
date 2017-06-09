@@ -94,7 +94,7 @@ stage_2() {
 	get_hub
 	fetch_artifact ${rem_repo}:draft $artf_stage_1 $PWD
     cat stage.env
-	source stage.env
+	source stage.env || source <(cat stage.env | tail +2)
 
 	cd $pwd/modpagespeed-$NPS_VERSION/pagespeed/automatic/
 	make -j $jobs psol BUILDTYPE=Release LDFLAGS="-Wl,--gc-sections" \
