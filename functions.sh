@@ -193,7 +193,7 @@ fetch_artifact() {
 
 ## $@ files/folders
 export_stage(){
-    [ -z "$pkg" || -z "$STAGE" ] && err "pkg or STAGE undefined, terminating" && exit 1
+    [ -z "$pkg" -o -z "$STAGE" ] && err "pkg or STAGE undefined, terminating" && exit 1
 	which hub &>/dev/null || get_hub
 	diff_env >stage.env
 	tar czf ${pkg}_stage_${STAGE}.tgz stage.env $@
@@ -204,14 +204,14 @@ export_stage(){
 
 ## $1 repo 
 import_stage(){
-    [ -z "$pkg" || -z "$STAGE" || -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
+    [ -z "$pkg" -o -z "$STAGE" -o -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
     fetch_artifact ${1}:draft ${pkg}_stage_${STAGE}.tgz $PWD
 	source stage.env || cat stage.env | tail +2 > stage1.env && source stage1.env
 }
 
 ## $1 repo
 check_skip_stage(){
-    [ -z "$pkg" || -z "$STAGE" || -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
+    [ -z "$pkg" -o -z "$STAGE" -o -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
     fetch_artifact ${1}:draft ${pkg}_stage_$STAGE.tgz -q && return 0 || return 1
 }
 ## $1 image file path

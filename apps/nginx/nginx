@@ -87,7 +87,7 @@ stage_2() {
     ## vars
     repo_path=$(./fetch-alp-tree.sh | tail -1)
 
-	import_stage
+	import_stage $rem_repo
 
     ## libpng
     cd libpng-$LPNG_VERSION
