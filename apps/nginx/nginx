@@ -96,7 +96,7 @@ stage_2() {
     cat stage.env
 	source stage.env || source <(cat stage.env | tail +2)
 
-	cd $pwd/modpagespeed-$NPS_VERSION/pagespeed/automatic/
+	cd $pwd/modpagespeed-$NPS_VERSION/src/pagespeed/automatic/
 	make -j $jobs psol BUILDTYPE=Release LDFLAGS="-Wl,--gc-sections" \
 		CXXFLAGS="-I/usr/include/apr-1 -I/home/b/libpng-$LPNG_VERSION -fPIC \
     -D_GLIBCXX_USE_CXX11_ABI=0 -march=native -D_GNU_SOURCE -Os -ffast-math \
