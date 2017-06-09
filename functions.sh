@@ -134,8 +134,10 @@ release_older_than() {
 
 ## get mostly local vars
 diff_env(){
-    diff <(bash -cl 'set -o posix && set') \
-        <(set -o posix && set && set +o posix) | \
+    bash -cl 'set -o posix && set >/tmp/clean.env'
+    set -o posix && set && set +o posix >/tmp/local.env
+    diff /tmp/clean.env \
+        /tmp/local.env | \
         grep -E "^>|^\+" | \
         grep -Ev "^(>|\+|\+\+) ?(BASH|COLUMNS|LINES|HIST|PPID|SHLVL|PS(1|2)|SHELL|FUNC)" | \
         sed -r 's/^> ?|^\+ ?//'
@@ -204,7 +206,7 @@ export_stage(){
 import_stage(){
     [ -z "$pkg" || -z "$STAGE" || -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
     fetch_artifact ${1}:draft stage_${STAGE}.tgz $PWD
-	source stage.env || source <(cat stage.env | tail +2)
+	source stage.env || cat stage.env | tail +2 > stage1.env && source stage1.env
 }
 ## $1 image file path
 ## $2 mount target
