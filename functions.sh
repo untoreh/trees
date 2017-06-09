@@ -196,17 +196,23 @@ export_stage(){
     [ -z "$pkg" || -z "$STAGE" ] && err "pkg or STAGE undefined, terminating" && exit 1
 	which hub &>/dev/null || get_hub
 	diff_env >stage.env
-	tar czf stage_${STAGE}.tgz stage.env $@
+	tar czf ${pkg}_stage_${STAGE}.tgz stage.env $@
 
-	hub release edit -d -a stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage || \
-	hub release create -d -a stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage
+	hub release edit -d -a ${pkg}_stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage || \
+	hub release create -d -a ${pkg}_stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage
 }
 
 ## $1 repo 
 import_stage(){
     [ -z "$pkg" || -z "$STAGE" || -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
-    fetch_artifact ${1}:draft stage_${STAGE}.tgz $PWD
+    fetch_artifact ${1}:draft ${pkg}_stage_${STAGE}.tgz $PWD
 	source stage.env || cat stage.env | tail +2 > stage1.env && source stage1.env
+}
+
+## $1 repo
+check_skip_stage(){
+    [ -z "$pkg" || -z "$STAGE" || -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
+    fetch_artifact ${1}:draft ${pkg}_stage_$STAGE.tgz -q && exit
 }
 ## $1 image file path
 ## $2 mount target
