@@ -138,12 +138,19 @@ fetch_artifact() {
         artf=$(basename $art_url)
         dest="$2"
     else
-        local repo_fetch=${1/:*/} repo_tag=${1/*:/}
+        local repo_fetch=${1/:*/} repo_tag=${1/*:/} draft= opts=
         [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=/latest || repo_tag=/tags/$repo_tag
-        [ "$repo_tag" = "/tags/draft" ] && repo_tag=$gh_token
+        [ "$repo_tag" = "/tags/draft" ] && repo_tag=$gh_token && draft=true
         artf="$2"
-        art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases${repo_tag} \
-            | grep browser_download_url | grep ${artf} | head -n 1 | cut -d '"' -f 4)
+        if $draft; then
+            art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases${repo_tag} \
+                | grep "${artf}" -B 3 | grep '"url"' | head -n 1 | cut -d '"' -f 4)${gh_token}
+            trap "unset -f wget" SIGINT SIGTERM SIGKILL SIGHUP RETURN EXIT
+            wget(){ /usr/bin/wget --header "Accept: application/octet-stream" $@; }
+        else
+            art_url=$(wget -qO- https://api.github.com/repos/${repo_fetch}/releases${repo_tag} \
+                | grep browser_download_url | grep ${artf} | head -n 1 | cut -d '"' -f 4)
+        fi
         dest="$3"
     fi
     [ -z "$(echo "$art_url" | grep "://")" ] && echo "no url found" 1>&2 && return 1
@@ -158,13 +165,13 @@ fetch_artifact() {
         *)
         mkdir -p $dest
         if [ $(echo "$artf" | grep -E "gz|tgz|xz|7z") ]; then
-            wget $art_url -qO- | tar xzf - -C $dest
+            wget $opts $art_url -qO- | tar xzf - -C $dest
         else
             if [ $(echo "$artf" | grep -E "zip") ]; then
-                wget $art_url -qO artifact.zip && unzip artifact.zip -d $dest
+                wget $hader $art_url -qO artifact.zip && unzip artifact.zip -d $dest
                 rm artifact.zip
             else
-                wget $art_url -qO- | tar xf - -C $dest
+                wget $opts $art_url -qO- | tar xf - -C $dest
             fi
         fi
     esac
@@ -292,7 +299,7 @@ get_hub() {
     mkdir -p /opt/bin
     fetch_artifact github/hub:v2.3.0-pre9 "linux-amd64.*.tgz" $PWD
     mv hub*/bin/hub /opt/bin
- 	export GITHUB_TOKEN=$GIT_TOKEN PATH=/opt/bin:$PATH
+     export GITHUB_TOKEN=$GIT_TOKEN PATH=/opt/bin:$PATH
 }
 
 install_glib() {

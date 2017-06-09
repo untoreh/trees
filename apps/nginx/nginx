@@ -92,7 +92,7 @@ stage_1() {
 stage_2() {
 	## import state
 	get_hub
-	fetch_artifact ${rem_repo}:draft $artf_stage_1 ${pkg}_stage $PWD
+	fetch_artifact ${rem_repo}:draft $artf_stage_1 $PWD
 	source stage.env &>/dev/null
 
 	cd $pwd/modpagespeed-$NPS_VERSION/pagespeed/automatic/
@@ -114,7 +114,7 @@ stage_2() {
 stage_3() {
 	## import state
 	get_hub
-	fetch_artifact ${rem_repo}:draft $artf_stage_2 ${pkg}_stage $PWD
+	fetch_artifact ${rem_repo}:draft $artf_stage_2 $PWD
 	source stage.env &>/dev/null
 	## ngxpgs
 	cd $pwd
