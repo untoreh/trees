@@ -205,7 +205,8 @@ export_stage(){
 ## $1 repo 
 import_stage(){
     [ -z "$pkg" -o -z "$STAGE" -o -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
-    fetch_artifact ${1}:draft ${pkg}_stage_${STAGE}.tgz $PWD
+    PREV_STAGE=$((STAGE - 1))
+    fetch_artifact ${1}:draft ${pkg}_stage_${PREV_STAGE}.tgz $PWD
 	source stage.env || cat stage.env | tail +2 > stage1.env && source stage1.env
 }
 
