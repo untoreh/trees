@@ -7,6 +7,11 @@ pkg="nginx"
 artf_stage_1="stage_1.tgz"
 artf_stage_2="stage_2.tgz"
 
+## prepare deps
+apk add sudo git apache2-dev alpine-sdk python apr-dev apr-util-dev \
+    zlib-dev linux-headers libressl-dev libjpeg-turbo-dev icu-dev gperf pcre-dev \
+    protobuf-dev protobuf-c-dev gd-dev
+
 stage_1() {
     repo_path=$(./fetch-alp-tree.sh | tail -1)
 	repo_local="${PWD}/lrepo"
@@ -17,11 +22,6 @@ stage_1() {
 	outp="$pwd/out/$pkg"
 	# jobs=$(($(cat /proc/cpuinfo | grep processor | wc -l || 1)*2))
 	jobs=4
-
-	## prepare deps
-	apk add sudo git apache2-dev alpine-sdk python apr-dev apr-util-dev \
-		zlib-dev linux-headers libressl-dev libjpeg-turbo-dev icu-dev gperf pcre-dev \
-		protobuf-dev protobuf-c-dev gd-dev
 
 	## build nginx pagespeed
 	NPS_VERSION=$(last_version_g pagespeed/ngx_pagespeed | grep -oE "[0-9.]+")
