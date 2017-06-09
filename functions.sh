@@ -211,6 +211,7 @@ import_stage(){
 
 ## $1 repo
 check_skip_stage(){
+    [ -n "$PKG" ] && pkg=$PKG
     [ -z "$pkg" -o -z "$STAGE" -o -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
     fetch_artifact ${1}:draft ${pkg}_stage_$STAGE.tgz -q && return 0 || return 1
 }
