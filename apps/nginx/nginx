@@ -2,9 +2,9 @@
 
 source functions.sh
 
+## vars
 rem_repo="untoreh/trees"
 pkg="nginx"
-artf_stage_1="stage_1.tgz"
 
 ## prepare deps
 apk add sudo git apache2-dev alpine-sdk python apr-dev apr-util-dev \
@@ -12,15 +12,15 @@ apk add sudo git apache2-dev alpine-sdk python apr-dev apr-util-dev \
     protobuf-dev protobuf-c-dev gd-dev
 
 stage_1() {
-    repo_path=$(./fetch-alp-tree.sh | tail -1)
+    ## vars
 	repo_local="${PWD}/lrepo"
 	ref="trunk"
 	pwd=$PWD
 	modulesp="$pwd/apps/$pkg/modules"
 	patchesp="$pwd/apps/$pkg/patches"
 	outp="$pwd/out/$pkg"
-	# jobs=$(($(cat /proc/cpuinfo | grep processor | wc -l || 1)*2))
 	jobs=4
+	# jobs=$(($(cat /proc/cpuinfo | grep processor | wc -l || 1)*2))
 
 	## build nginx pagespeed
 	NPS_VERSION=$(last_version_g pagespeed/ngx_pagespeed | grep -oE "[0-9.]+")
@@ -80,20 +80,16 @@ stage_1() {
     -D_GLIBCXX_USE_CXX11_ABI=0 -march=native -D_GNU_SOURCE -Os -ffast-math \
     -ffunction-sections -fdata-sections -Wl,--gc-sections"
 
-	## export state
+	## export stage
 	cd $pwd
-	get_hub
-	diff_env >stage.env
-	tar czf $artf_stage_1 libpng-$LPNG_VERSION modpagespeed-$NPS_VERSION stage.env
-	hub release create -d -a $artf_stage_1 -m "${pkg}_stage" ${pkg}_stage
+    export_stage libpng-$LPNG_VERSION modpagespeed-$NPS_VERSION
 }
 
 stage_2() {
-	## import state
-	get_hub
-	fetch_artifact ${rem_repo}:draft $artf_stage_1 $PWD
-    cat stage.env
-	source stage.env || source <(cat stage.env | tail +2)
+    ## vars
+    repo_path=$(./fetch-alp-tree.sh | tail -1)
+
+	import_stage
 
     ## libpng
     cd libpng-$LPNG_VERSION

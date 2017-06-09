@@ -7,6 +7,9 @@ cf="\033[0m"
 printc() {
     echo -e "${cn}${@}${cf}"
 }
+err() {
+    echo $@ 1>&2
+}
 rse()
 {
     ((eval $(for phrase in "$@"; do echo -n "'$phrase' "; done)) 3>&1 1>&2 2>&3 | sed -e "s/^\(.*\)$/$(echo -en \\033)[31;1m\1$(echo -en \\033)[0m/") 3>&1 1>&2 2>&3
@@ -131,10 +134,9 @@ release_older_than() {
 
 ## get mostly local vars
 diff_env(){
-    bash -cl "set -o posix && set >/tmp/clean.env"
-    set -o posix && set >/tmp/local.env && set +o posix
-
-    diff /tmp/clean.env /tmp/local.env | grep -E "^>|^\+" | \
+    diff <(bash -cl 'set -o posix && set') \
+        <(set -o posix && set && set +o posix) | \
+        grep -E "^>|^\+" | \
         grep -Ev "^(>|\+|\+\+) ?(BASH|COLUMNS|LINES|HIST|PPID|SHLVL|PS(1|2)|SHELL|FUNC)" | \
         sed -r 's/^> ?|^\+ ?//'
 }
@@ -187,6 +189,23 @@ fetch_artifact() {
     esac
 }
 
+## $@ files/folders
+export_stage(){
+    [ -z "$pkg" || -z "$STAGE" ] && err "pkg or STAGE undefined, terminating" && exit 1
+	which hub &>/dev/null || get_hub
+	diff_env >stage.env
+	tar czf stage_${STAGE}.tgz stage.env $@
+
+	hub release edit -d -a stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage || \
+	hub release create -d -a stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage
+}
+
+## $1 repo 
+import_stage(){
+    [ -z "$pkg" || -z "$STAGE" || -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
+    fetch_artifact ${1}:draft stage_${STAGE}.tgz $PWD
+	source stage.env || source <(cat stage.env | tail +2)
+}
 ## $1 image file path
 ## $2 mount target
 ## mount image, ${lon} populated with loop device number
