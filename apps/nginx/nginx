@@ -28,9 +28,7 @@ stage_1() {
 	LPNG_VERSION=1.2.56
 	LPNG_LIB=libpng12
 
-	## skip if artifact is staged
-    check_skip_stage $rem_repo
-
+    
 	## libpng
 	wget -q https://sourceforge.net/projects/libpng/files/$LPNG_LIB/$LPNG_VERSION/libpng-$LPNG_VERSION.tar.gz
 	tar -zxf libpng-$LPNG_VERSION.tar.gz

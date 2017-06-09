@@ -36,7 +36,13 @@ handle_build() {
 	fi
 	## if not a package build, only STAGE1 is allowed
 	if [ -z "$PKG" -o "$PKG" = "$BAS" -a $STAGE != 1 ]; then
-		[ $STAGE != 1 ] && printc "skipping non PKG extra stages"
+		printc "skipping non PKG extra stages"
+		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+		sleep 3600
+	fi
+	## skip if an artifact for this stage is already staged
+	if check_skip_stage $TRAVIS_REPO_SLUG; then
+		printc "job has staged artifacts, skipping."
 		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
 		sleep 3600
 	fi
