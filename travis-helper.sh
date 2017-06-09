@@ -17,7 +17,9 @@ handle_build() {
 	## tags format is ${PKG}-YY.MM-X
 	PKG=${TRAVIS_TAG/-*/}
 	if [ -n "$PKG" ]; then
-		BAS=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
+		BST=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
+		BAS=${BST/,*}
+		STAGES=${BST/*,}
 	fi
 	## skip build if 
 	## - the tag was not pushed by base repo (to rebuild all the dependents)
@@ -25,10 +27,16 @@ handle_build() {
 	## - it is not older than 1 week
 	pkg_d=$(last_release_date $repo_rem $PKG)
 	bas_d=$(last_release_date $user/$BAS)
-	week_old=$(release_older_than $pkg_d "7 days ago")
+	week_old=$(release_older_than $pkg_d "7 days ago" && echo true)
 	if [ "$PKG" != "$BAS" -a $bas_d -le $pkg_d -a ! "$week_old" ]; then
 		printc "$PKG was recently built."
 		TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER:-$TRAVIS_BUILD_NUMBER}
+		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
+		sleep 3600
+	fi
+	## if not a package build, only STAGE1 is allowed
+	if [ -z "$PKG" -o "$PKG" = "$BAS" -a $STAGE != 1 ]; then
+		[ $STAGE != 1 ] && printc "skipping non PKG extra stages"
 		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
 		sleep 3600
 	fi

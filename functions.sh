@@ -120,8 +120,8 @@ last_release_date() {
 ## $1 release date
 ## $2 time span eg "7 days ago"
 release_older_than() {
-    if [ $(echo -n $1 | wc -c) != 14 ]; then
-        echo "wrong date to compare".
+    if [ $(echo -n $1 | wc -c) != 14 -a "$1" != 0 ]; then
+        err  "wrong date to compare"
     fi
     release_d=$1
     span_d=$(date --date="$2" +%Y%m%d%H%M%S)
@@ -167,7 +167,7 @@ fetch_artifact() {
         fi
         dest="$3"
     fi
-    [ -z "$(echo "$art_url" | grep "://")" ] && echo "no url found" 1>&2 && return 1
+    [ -z "$(echo "$art_url" | grep "://")" ] && err "no url found" && return 1
     ## if no destination dir stream to stdo
     case "$dest" in
         "-")
@@ -287,7 +287,7 @@ prepare_rootfs() {
 ## routing after-modification actions for ostree checkouts
 wrap_rootfs() {
     [ -z "$1" ] && (
-        echo "no target directory provided to wrap_rootfs"
+        err "no target directory provided to wrap_rootfs"
         exit 1
     )
     cd ${1}
