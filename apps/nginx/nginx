@@ -96,6 +96,11 @@ stage_2() {
     cat stage.env
 	source stage.env || source <(cat stage.env | tail +2)
 
+    ## libpng
+    cd libpng-$LPNG_VERSION
+    make install
+    cd -
+
 	cd $pwd/modpagespeed-$NPS_VERSION/src/pagespeed/automatic/
 	make -j $jobs psol BUILDTYPE=Release LDFLAGS="-Wl,--gc-sections" \
 		CXXFLAGS="-I/usr/include/apr-1 -I/home/b/libpng-$LPNG_VERSION -fPIC \
