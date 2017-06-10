@@ -88,9 +88,7 @@ skip_remaining_jobs() {
 		awk '/^#'$TRAVIS_JOB_NUMBER'/,EOF{
 		getline; print gensub(/.*('$TRAVIS_BUILD_NUMBER'\.[0-9]+).*/,"\\1","g")
 		}')
-	IFS=" "
 	for j in $r_jobs; do
 		travis cancel $j --no-interactive -t $TRAVIS_TOKEN
 	done
-	unset IFS
 }
