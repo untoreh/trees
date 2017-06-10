@@ -15,7 +15,7 @@ handle_build() {
 		return
     fi
 	## tags format is ${PKG}-YY.MM-X
-	export PKG=${TRAVIS_TAG/-*/}
+	PKG=${TRAVIS_TAG/-*/}
 	if [ -n "$PKG" ]; then
 		BST=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
 		BAS=${BST/,*}
@@ -77,6 +77,7 @@ handle_build() {
 
 handle_deploy() {
 	## if no changes where made to the tree skip deployment
+	export PKG=${TRAVIS_TAG/-*/}
 	if [ $(cat file.up | grep "$PKG") ]; then
 		travis cancel $TRAVIS_JOB_NUMBER --no-interactive -t $TRAVIS_TOKEN
 		sleep 3600
