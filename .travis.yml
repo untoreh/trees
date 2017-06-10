@@ -28,6 +28,7 @@ deploy:
     condition: $(find ${PKG}*.tar 2>/dev/null | wc -l) -gt 0
 after_deploy:
 - switch_release_tag $TRAVIS_REPO_SLUG $TRAVIS_TAG $PKG
+- skip_remaining_jobs
 jobs:
   include:
   - stage: "1"
