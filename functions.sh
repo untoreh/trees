@@ -300,6 +300,7 @@ prepare_rootfs() {
 }
 
 ## $1 ref
+## $2 skip links
 ## routing after-modification actions for ostree checkouts
 wrap_rootfs() {
     [ -z "$1" ] && (
@@ -307,14 +308,16 @@ wrap_rootfs() {
         exit 1
     )
     cd ${1}
-    for l in usr/etc,etc usr/lib,lib usr/lib,lib64 usr/bin,bin usr/sbin,sbin; do
-        IFS=','
-        set -- $l
-        cp -a --remove-destination ${2}/* ${1}
-        rm -rf $2
-        ln -sr $1 $2
-        unset IFS
-    done
+    if [ "$2" != "-s" ]; then
+        for l in usr/etc,etc usr/lib,lib usr/lib,lib64 usr/bin,bin usr/sbin,sbin; do
+            IFS=','
+            set -- $l
+            cp -a --remove-destination ${2}/* ${1}
+            rm -rf $2
+            ln -sr $1 $2
+            unset IFS
+        done
+    fi
     rm -rf var/cache/apk/*
     umount -Rf dev proc sys run &>/dev/null
     rm -rf dev proc sys run
