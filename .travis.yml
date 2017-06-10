@@ -25,7 +25,7 @@ deploy:
   - "${PKG}.sum"
   on:
     tags: true
-    condition: $(find "${PKG}*.tar" 2>/dev/null | wc -l) -gt 0
+    condition: $(find ${PKG}*.tar 2>/dev/null | wc -l) -gt 0
 after_deploy:
 - switch_release_tag $TRAVIS_REPO_SLUG $TRAVIS_TAG $PKG
 jobs:
