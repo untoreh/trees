@@ -84,7 +84,10 @@ handle_deploy() {
 }
 
 skip_remaining_jobs() {
-	r_jobs=$(awk '/^#'$TRAVIS_JOB_NUMBER'/,EOF{getline; print gensub(/.*('$TRAVIS_BUILD_NUMBER'\.[0-9]+).*/,"\\1","g")}')
+	r_jobs=$(travis show $TRAVIS_BUILD_NUMBER | \
+		awk '/^#'$TRAVIS_JOB_NUMBER'/,EOF{
+		getline; print gensub(/.*('$TRAVIS_BUILD_NUMBER'\.[0-9]+).*/,"\\1","g")
+		}')
 	IFS=" "
 	for j in $r_jobs; do
 		travis cancel $j --no-interactive -t $TRAVIS_TOKEN
