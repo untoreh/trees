@@ -22,7 +22,7 @@ crc apt install -y -q hhvm
 crc apt-get clean
 crc rm -rf /var/lib/apt/lists/*
 umount_hw $pkg
-wrap_rootfs $pkg
+wrap_rootfs $pkg -s
 
 ## commit tree to app branch
 ostree --repo=${repo_path} fsck
