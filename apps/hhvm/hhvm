@@ -6,7 +6,7 @@ rem_repo="untoreh/trees"
 repo_path=$(./fetch-ubu-tree.sh | tail -1)
 ref="trunk"
 pkg="hhvm"
-
+ostree --repo=${repo_path} fsck
 ## checkout the base
 rm -rf ${pkg}
 ostree checkout --repo=${repo_path} -H --user-mode ${ref} ${pkg}
