@@ -6,10 +6,10 @@ rem_repo="untoreh/trees"
 repo_path=$(./fetch-ubu-tree.sh | tail -1)
 ref="trunk"
 pkg="hhvm"
-ostree --repo=${repo_path} fsck
 ## checkout the base
 rm -rf ${pkg}
 ostree checkout --repo=${repo_path} -H --user-mode ${ref} ${pkg}
+mount_over $pkg
 
 ## package routines
 mount_hw $pkg
@@ -18,17 +18,15 @@ cp -a /etc/resolv.conf $pkg/etc/
 crc apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0x5a16e7281be7a449
 crc bash -c 'source /etc/os-release ; echo "deb http://dl.hhvm.com/ubuntu $UBUNTU_CODENAME main" > /etc/apt/sources.list.d/hhvm.list'
 crc apt update
-crc apt install -y -q hhvm
+crc bash -c 'DEBIAN_FRONTEND=noninteractive apt install -y -q hhvm'
 crc apt-get clean
 crc rm -rf /var/lib/apt/lists/*
 umount_hw $pkg
 wrap_rootfs $pkg -s
 
 ## commit tree to app branch
-ostree --repo=${repo_path} fsck
 rev=$(ostree --repo=${repo_path} commit -s "$(date)-${pkg}-build" \
 	--skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
-ostree --repo=${repo_path} fsck
 
 ## get the last app checksum from remote
 old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)

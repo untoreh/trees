@@ -251,6 +251,17 @@ mount_image() {
     done
 }
 
+## $1 overdir
+mount_over(){
+    local pkg
+    pkg=$1
+    [ -z "$pkg" ] && return 1
+    mkdir -p ${pkg}-lo ${pkg}-wo ${pkg}-up
+    mount -t overlay \
+        -o lowerdir=${pkg}-lo,workdir=${pkg}-wo,upperdir=${pkg}-up \
+        none ${pkg} || err "overlay failed for $pkg" && exit 1
+}
+
 ## $1 rootfs
 mount_hw() {
     rootfs=$1
