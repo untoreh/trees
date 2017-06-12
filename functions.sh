@@ -146,11 +146,13 @@ diff_env(){
 ## $1 repo:tag
 ## $2 artifact name
 ## $3 dest dir
+## $4 extra wget options
 fetch_artifact() {
     if [ "${1:0:4}" = "http" ]; then
         art_url="$1"
         artf=$(basename $art_url)
         dest="$2"
+        shift 2
     else
         local repo_fetch=${1/:*/} repo_tag=${1/*:/} draft= opts=
         [ -z "$repo_tag" -o "$repo_tag" = "$1" ] && repo_tag=/latest || repo_tag=/tags/$repo_tag
@@ -166,12 +168,13 @@ fetch_artifact() {
                 | grep browser_download_url | grep ${artf} | head -n 1 | cut -d '"' -f 4)
         fi
         dest="$3"
+        shift 3
     fi
     [ -z "$(echo "$art_url" | grep "://")" ] && err "no url found" && return 1
     ## if no destination dir stream to stdo
     case "$dest" in
         "-")
-        wget $art_url -qO-
+        wget $@ $art_url -qO-
         ;;
         "-q")
         return 0
@@ -179,16 +182,16 @@ fetch_artifact() {
         *)
         mkdir -p $dest
         if [ $(echo "$artf" | grep -E "(gz|tgz|xz|7z)$") ]; then
-            wget $opts $art_url -qO- | tar xzf - -C $dest
+            wget $@ $opts $art_url -qO- | tar xzf - -C $dest
         else
             if [ $(echo "$artf" | grep -E "zip$") ]; then
-                wget $hader $art_url -qO artifact.zip && unzip artifact.zip -d $dest
+                wget $@ $hader $art_url -qO artifact.zip && unzip artifact.zip -d $dest
                 rm artifact.zip
             else
                 if [ $(echo "$artf" | grep -E "bz2$") ]; then
-                    wget $opts $art_url -qO- | tar xjf - -C $dest
+                    wget $@ $opts $art_url -qO- | tar xjf - -C $dest
                 else
-                    wget $opts $art_url -qO- | tar xf - -C $dest
+                    wget $@ $opts $art_url -qO- | tar xf - -C $dest
                 fi
             fi
         fi

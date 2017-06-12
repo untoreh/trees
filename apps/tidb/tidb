@@ -21,7 +21,7 @@ for d in $pkg $pkg_ctl; do
     mount_over $d
 done
 
-fetch_artifact http://download.pingcap.org/${artifact}.tar.gz artf
+fetch_artifact http://download.pingcap.org/${artifact}.tar.gz artf -4
 for b in pd-server tidb-server tikv-server; do
     mv artf/${artifact}/bin/${b} ${pkg}/usr/bin
 done
