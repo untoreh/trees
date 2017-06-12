@@ -49,6 +49,7 @@ handle_build() {
     week_old=$(release_older_than $pkg_d "7 days ago" && echo true)
     if [ "$PKG" != "$BAS" -a $bas_d -le $pkg_d -a ! "$week_old" ]; then
         printc "$PKG was recently built."
+        skip_remaining_jobs
         stop_travis build
         sleep 3600
     fi
@@ -78,6 +79,7 @@ handle_build() {
             newtag=$(md)
             git tag ${tag_prefix}-${newtag} && git push --tags $repo_rem_url
         done
+        skip_remaining_jobs
         stop_travis build
         sleep 3600
     fi
@@ -88,6 +90,7 @@ handle_build() {
             newtag=$(md)
             git tag ${tag_prefix}-${newtag} && git push --tags $repo_rem_url
         done
+        skip_remaining_jobs
         stop_travis build
         sleep 3600
     fi
@@ -96,6 +99,7 @@ handle_build() {
 handle_deploy() {
     ## if no changes where made to the tree skip deployment
     if [ $(cat file.up | grep "$PKG") ]; then
+        skip_remaining_jobs
         stop_travis job
         sleep 3600
     fi
