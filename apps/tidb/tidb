@@ -9,6 +9,7 @@ ref="trunk"
 pkg="tidb"
 pkg_ctl="tidb_ctl"
 artifact="tidb-latest-linux-amd64"
+tpl_path="templates/${pkg}"
 
 ## copy repo to local filesystem to allow checkout through hardlinks
 rm -rf $repo_local
@@ -25,10 +26,12 @@ fetch_artifact http://download.pingcap.org/${artifact}.tar.gz artf -4
 for b in pd-server tidb-server tikv-server; do
     mv artf/${artifact}/bin/${b} ${pkg}/usr/bin
 done
+copy_image_cfg $pkg
 wrap_rootfs ${pkg}
 for b in goyacc pd-ctl pd-recover pd-tso-bench tikv-ctl; do
     mv artf/${artifact}/bin/${b} ${pkg_ctl}/usr/bin
 done
+copy_image_cfg $pkg_ctl
 wrap_rootfs ${pkg_ctl}
 
 for d in $pkg $pkg_ctl; do

@@ -29,7 +29,7 @@ deploy:
 after_deploy:
 - switch_release_tag $TRAVIS_REPO_SLUG $TRAVIS_TAG $PKG
 - skip_remaining_jobs
-- cleanup_stage
+- cleanup_stage $TRAVIS_REPO_SLUG
 jobs:
   include:
   - stage: "1"

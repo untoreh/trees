@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
 export PKG=$1
 source functions.sh

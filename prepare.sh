@@ -9,12 +9,14 @@ sync
 apk add --update-cache  \
  bash  \
  wget  \
+ curl \
  git  \
  unzip  \
  tar  \
  xz  \
  coreutils  \
  binutils  \
+ findutils \
  util-linux \
  libressl  \
  ca-certificates  \

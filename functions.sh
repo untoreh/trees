@@ -51,7 +51,9 @@ tag_id() {
 ## $1 repo $2 old tag $3 new tag
 switch_release_tag(){
     tid=$(tag_id ${1} ${2})
-    curl -u $GIT_USER:$GIT_TOKEN \
+    new_tid=$(tag_id ${1} ${3})
+    curl -X DELETE -u $GIT_USER:$GIT_TOKEN https://api.github.com/repos/${1}/releases/${new_tid}
+    curl -X PATCH -u $GIT_USER:$GIT_TOKEN \
     -d '{"tag_name": "'${3}'", "name": "'${3}'"}' \
     https://api.github.com/repos/${1}/releases/${tid}
 }
@@ -135,7 +137,7 @@ release_older_than() {
 ## get mostly local vars
 diff_env(){
     bash -cl 'set -o posix && set >/tmp/clean.env'
-    set -o posix && set && set +o posix >/tmp/local.env
+    set -o posix && set >/tmp/local.env && set +o posix
     diff /tmp/clean.env \
         /tmp/local.env | \
         grep -E "^>|^\+" | \
@@ -310,6 +312,16 @@ prepare_rootfs() {
     mkdir -p var var/cache/apk usr/lib usr/bin usr/sbin usr/etc
     mkdir -p etc lib lib64 bin sbin
     cd -
+}
+
+## $1 $pkg
+copy_image_cfg() {
+    local pkg=$1
+    if [ ! -d "${pkg}" ]; then
+        err "package root not found, terminating."
+        exit 1
+    fi
+    cp $PWD/templates/${pkg}/{image.conf,image.env} ${pkg}/
 }
 
 ## $1 ref

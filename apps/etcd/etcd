@@ -15,6 +15,7 @@ cp -a $repo_path $repo_local
 ## build app tree
 prepare_rootfs ${pkg}
 apkc ${pkg} add ${pkg}
+copy_image_cfg $pkg
 wrap_rootfs ${pkg}
 
 ## commit tree to app branch
