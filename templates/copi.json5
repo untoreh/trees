@@ -1,0 +1,71 @@
+{
+    consul: "{{ .IPv4 | default "localhost"}}:8500",
+    {{ if .services -}}
+    jobs: [{{ range $s := ( .services | split " " ) -}}
+           {
+               name: "{{ $s | regexReplaceAll "_" "-" }}",
+               {{- if $res := ( env ( printf "%s_res" $s)) }}
+               restarts: "{{ print $res -}}",
+               {{- end -}}
+               {{- if $when := ( env (printf "%s_when_freq" $s)) }}
+               when: {
+                   {{- range $idx, $w := (print $when | split ":") }}
+                   {{- if eq $idx 0 }}
+                   {{ printf "%s: " $w }}
+                   {{- else -}}
+                   "{{- print $w }}",
+                   {{- end}}
+                   {{- end}}
+                   {{- if $source := ( env (printf "%s_when_src" $s)) }}
+                   source: "{{ print $source }}",
+                   {{- end}}
+                   {{ if $wto := ( env (printf "%s_when_to" $s)) }}
+                   timeout: "{{ print $wto }}",
+                   {{- end -}}
+               }, 
+               {{- end }}
+               exec: 
+                   {{- $exec := (env (printf "%s_exec" $s)) | default (printf "/usr/bin/%s" $s) |  regexReplaceAll "_" "-"}}
+                   {{- $args := (env (printf "%s_args" $s)) -}}
+                   {{- if $args }} [
+                   "{{ print $exec }}",
+                   {{- else}}
+                   "{{ print $exec}}",
+                   {{- end}}
+                   {{- if $args }}
+                   {{ range $a := $args | split "\"" -}}
+                   {{ $r := print $a | split "=" | join " " | split " " -}}
+                   {{- range $r1 := $r -}}
+                   "{{ print $r1 }}",
+                   {{- end}}
+                   {{- end}}
+                   {{- end}}
+                   {{- if $args -}}
+                   ],
+                   {{- end }}
+               {{- if $port := ( env ( printf "%s_port" $s)) }}
+               port: "{{ $port }}",
+               {{- end}}
+               {{- if $timeout := ( env ( printf "%s_to" $s)) }}
+               timeout: {{ $timeout }},
+               {{- end}}
+               {{- if $health := ( env ( printf "%s_health_exec" $s)) }}
+               health: {
+                exec: "{{ $health }}",
+                interval: {{ ( env ( printf "%s_health_inter" $s)) | default 300}},
+                ttl: {{ ( env ( printf "%s_health_ttl" $s)) | default 300}},
+                timeout: "{{ ( env ( printf "%s_health_to" $s)) | default "60s"}}",
+               }
+               {{- end}}
+           },
+           {{- end}}],
+    {{- end}}
+    {{ if .watches }}
+    watches: [{{ range $wa := ( .watches | split " " ) -}}
+              {
+                  name: "{{ $wa | regexReplaceAll "_" "-" }}",
+                  interval: {{ (env (printf "watch_%s_inter" $wa)) | default 300 }},
+              }]
+    {{- end}}
+    {{- end}}
+}

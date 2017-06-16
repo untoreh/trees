@@ -312,6 +312,16 @@ prepare_rootfs() {
     cd -
 }
 
+## $1 $pkg
+copy_image_cfg() {
+    local pkg=$1
+    if [ ! -d "${pkg}" ]; then
+        err "package root not found, terminating."
+        exit 1
+    fi
+    cp $PWD/templates/${pkg}/{image.conf,image.env} ${pkg}/
+}
+
 ## $1 ref
 ## $2 skip links
 ## routing after-modification actions for ostree checkouts
