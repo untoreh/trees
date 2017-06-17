@@ -6,7 +6,6 @@ services:
 env:
 - STAGES=(1 2 3)
 install:
-- set -x
 - source travis-helper.sh
 - handle_build
 - env >build.env
