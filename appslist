@@ -1,3 +1,4 @@
 etcd:pine,1
 hhvm:trub,1
 nginx:pine,2
+tidb:pine,1
