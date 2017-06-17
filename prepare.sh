@@ -9,6 +9,7 @@ sync
 apk add --update-cache  \
  bash  \
  wget  \
+ curl \
  git  \
  unzip  \
  tar  \

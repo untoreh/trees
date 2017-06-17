@@ -51,7 +51,9 @@ tag_id() {
 ## $1 repo $2 old tag $3 new tag
 switch_release_tag(){
     tid=$(tag_id ${1} ${2})
-    curl -u $GIT_USER:$GIT_TOKEN \
+    new_tid=$(tag_id ${1} ${3})
+    curl -X DELETE -u $GIT_USER:$GIT_TOKEN https://api.github.com/repos/${1}/releases/${new_tid}
+    curl -X PATCH -u $GIT_USER:$GIT_TOKEN \
     -d '{"tag_name": "'${3}'", "name": "'${3}'"}' \
     https://api.github.com/repos/${1}/releases/${tid}
 }
