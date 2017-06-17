@@ -35,8 +35,9 @@ handle_build() {
     fi
     ## tags format is ${PKG}-YY.MM-X
     PKG=${TRAVIS_TAG/-*/}
+    NTAG=${echo ${PKG} | grep -E "^[0-9]+\.[0-9]+$"}
     STAGES=1
-    if [ -n "$PKG" ]; then
+    if [ -n "$PKG" -a -z "$NTAG" ]; then
         BST=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
         BAS=${BST/,*}
         STAGES=${BST/*,}
@@ -85,7 +86,7 @@ handle_build() {
         sleep 3600
     fi
     ## if the event is a cron or commit is not app-prefixed we push a new tag for each app and exit
-    if [ "$TRAVIS_EVENT_TYPE" = cron -a -z "$PKG" ]; then
+    if [ "$TRAVIS_EVENT_TYPE" = cron -a -n "$NTAG" ]; then
         for a in $(cat $appslist); do
             tag_prefix=${a/:*/}
             newtag=$(md)
