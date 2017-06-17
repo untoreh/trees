@@ -35,7 +35,7 @@ handle_build() {
     fi
     ## tags format is ${PKG}-YY.MM-X
     PKG=${TRAVIS_TAG/-*/}
-    NTAG=${echo ${PKG} | grep -E "^[0-9]+\.[0-9]+$"}
+    NTAG=$( echo ${PKG} | grep -E "^[0-9]+\.[0-9]+$" )
     STAGES=1
     if [ -n "$PKG" -a -z "$NTAG" ]; then
         BST=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
