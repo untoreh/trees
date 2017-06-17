@@ -35,6 +35,7 @@ handle_build() {
     fi
     ## tags format is ${PKG}-YY.MM-X
     PKG=${TRAVIS_TAG/-*/}
+    STAGES=1
     if [ -n "$PKG" ]; then
         BST=$(cat $appslist | grep "$PKG" | head -1 | sed 's/.*://')
         BAS=${BST/,*}
