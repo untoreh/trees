@@ -86,7 +86,7 @@ handle_build() {
         sleep 3600
     fi
     ## if the event is a cron or commit is not app-prefixed we push a new tag for each app and exit
-    if [ "$TRAVIS_EVENT_TYPE" = cron -a -n "$NTAG" ]; then
+    if [ "$TRAVIS_EVENT_TYPE" = cron -o -n "$NTAG" ]; then
         for a in $(cat $appslist); do
             tag_prefix=${a/:*/}
             newtag=$(md)
