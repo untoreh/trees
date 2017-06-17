@@ -8,7 +8,7 @@ ref="trunk"
 pkg="hhvm"
 ## checkout the base
 rm -rf ${pkg}
-ostree checkout --repo=${repo_path} -H --user-mode ${ref} ${pkg}
+ostree checkout --repo=${repo_path} -H --user-mode ${ref} ${pkg}-lo
 mount_over $pkg
 
 ## package routines
