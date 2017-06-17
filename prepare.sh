@@ -15,6 +15,7 @@ apk add --update-cache  \
  xz  \
  coreutils  \
  binutils  \
+ findutils \
  util-linux \
  libressl  \
  ca-certificates  \
