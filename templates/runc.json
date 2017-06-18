@@ -11,8 +11,19 @@
         },
         {
             "path": "/usr/bin/sh",
-            "args": ["sh", "-c", "source rootfs/prestart.sh"]
-        }]
+            "args": ["sh", "-c", "[ -s rootfs/prestart.sh ] && rootfs/prestart.sh || true"]
+        }],
+        "poststart": [
+        {
+            "path": "/usr/bin/sh",
+            "args": ["sh", "-c", "[ -s rootfs/poststart.sh ] && rootfs/poststart.sh || true"]
+        }
+        ],
+        "poststop": [{
+            "path": "/usr/bin/sh",
+            "args": ["sh", "-c", "[ -s rootfs/poststop.sh ] && rootfs/poststop.sh || true"]
+        }
+        ]
     },
     "process": {
         "terminal": true,
@@ -212,6 +223,24 @@
                 "nosuid",
                 "nodev",
                 "size=65536k"
+            ]
+        },
+        {
+            "destination": "/run",
+            "type": "tmpfs",
+            "source": "tmpfs",
+            "options": [
+                "nosuid",
+                "nodev",
+                "mode=755"
+            ]
+        },
+        {
+            "destination": "/var/run",
+            "type": "bind",
+            "source": "/run",
+            "options": [
+                "bind"
             ]
         }
     ],
