@@ -26,13 +26,13 @@ apk add alpine-sdk libressl-dev glib-dev curl-dev asciidoc autoconf automake
 crc apk add glib curl openrc
 git clone $mgt megatools && cd megatools && ./autogen.sh &&  make 
 install -c megadf megadl megaget megals megamkdir megaput megareg megarm megacopy ../${pkg}/usr/local/bin
-cd -
+cd ..
 ## hubicfuse 
 apk add git alpine-sdk libxml2-dev curl-dev fuse-dev json-c-dev file-dev
 crc apk add libxml2 json-c file
 git clone $hbf hubicfuse && cd hubicfuse && ./configure && make
 install -c hubicfuse ../${pkg}/usr/local/bin
-cd -
+cd ..
 ## hubic(cli)
 cat << EOF >>${pkg}/etc/apk/repositories
 http://dl-cdn.alpinelinux.org/alpine/edge/testing

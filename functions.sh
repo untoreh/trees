@@ -239,12 +239,12 @@ cleanup_stage(){
 ## $2 mount target
 ## mount image, ${lon} populated with loop device number
 mount_image() {
-    umount -Rfd $2
+    umount -Rfd $2 2>/dev/null
     rm -rf $2 && mkdir $2
     lon=0
-    while [ -z "$(losetup -P /dev/loop${lon} $(realpath ${1}) && echo true)" ]; do
+    while [ -z "$(losetup -P /dev/loop${lon} $(realpath ${1}) 2>/dev/null && echo true)" ]; do
         lon=$((lon + 1))
-        [ $lon -gt 10 ] && return 1
+        [ $lon -gt 10 ] && (err "failed mounting image $1" && return 1)
         sleep 1
     done
     ldev=/dev/loop${lon}
@@ -253,17 +253,19 @@ mount_image() {
     for p in $(find /dev/loop${lon}p*); do
         mp=$(echo "$p" | sed 's~'$ldev'~~')
         mkdir -p $tgt/$mp
-        mount -o nouuid $p $tgt/$mp
+        mount -o nouuid $p $tgt/$mp 2>/dev/null
     done
 }
 
 ## $1 overdir
+## $2 lowerdir
 mount_over(){
-    local pkg=$1
+    local pkg=$1 lodir=$2
     [ -z "$pkg" ] && return 1
-    mkdir -p ${pkg} ${pkg}-lo ${pkg}-wo ${pkg}-up
+    [ -z "$lodir" ] && lodir="${pkg}-lo"
+    mkdir -p ${pkg} $lodir ${pkg}-wo ${pkg}-up
     mount -t overlay \
-        -o lowerdir=${pkg}-lo,workdir=${pkg}-wo,upperdir=${pkg}-up \
+        -o lowerdir=$lodir,workdir=${pkg}-wo,upperdir=${pkg}-up \
         none ${pkg} || ( err "overlay failed for $pkg" && exit 1 )
 }
 
@@ -376,7 +378,7 @@ package_tree(){
         err "variables not defined."
         exit 1
     fi
-    repo_local=$repo_path
+    mount_over $repo_local $repo_path
     ## commit tree to app branch
     rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
         --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
