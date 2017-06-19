@@ -359,8 +359,11 @@ base_tree(){
     repo_path=$(./fetch-alp-tree.sh | tail -1)
     repo_local="${PWD}/lrepo"
     rm -rf ${pkg}
-    ostree checkout --repo=${repo_path} --user-mode ${ref} ${pkg}-lo
+    ostree checkout --repo=${repo_path} --union ${ref} ${pkg}-lo
     mount_over $pkg
+    mount_hw $pkg
+    ln -sr ${pkg}/usr/etc ${pkg}/etc
+    mkdir -p ${pkg}/var/cache/apk
     alias crc="chroot $pkg"
 }
 
