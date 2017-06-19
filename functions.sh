@@ -437,6 +437,7 @@ compare_csums() {
         echo $pkg >>file.up
         exit
     fi
+    printc "csums different."
 }
 
 ## fetch github hub bin
