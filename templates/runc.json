@@ -238,7 +238,7 @@
         {
             "destination": "/var/run",
             "type": "bind",
-            "source": "/run",
+            "source": "rootfs/run",
             "options": [
                 "bind"
             ]

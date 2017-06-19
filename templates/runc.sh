@@ -1,13 +1,33 @@
-#!/bin/bash -l
+#!/bin/bash -li
+## this script needs the -i(nteractive) flag to spawn ttys for detached containers
+shopt -s extglob
 
 ARGS=$@
 
-BUNDLE=$PWD
+BUNDLE=
+DETACH=
+runvar=
+nnkr="--no-new-keyring"
 while [[ $# -gt 0 ]]; do
         key="$1"
         case $key in
                 -b | --bundle)
                         BUNDLE=$2
+                        ;;
+                -d | --detach)
+                        DETACH=true
+                        ;;
+                --no-new-keyring)
+                        nnkr=
+                        ;;
+                run | create)
+                        runvar=true
+                        ARGS="$ARGS $nnkr"
+                        ;;
+                +([^-]))
+                        if [ -n "$runvar" ]; then
+                                name=$key
+                        fi
                         ;;
                 -*=* | --*=*)
                         k=${key/=*}
@@ -22,20 +42,34 @@ while [[ $# -gt 0 ]]; do
         shift
 done
 
-## source extra image config
-. $BUNDLE/rootfs/image.conf &>/dev/null
+if [ -z "$BUNDLE" ]; then
+        ## check if current dir is a bundle
+        if [ -s config.json -a -d rootfs -a -n "$runvar" ]; then
+                BUNDLE=$PWD
+        else 
+                if [ -n "$name" ]; then
+                        BUNDLE="/sysroot/ostree/repo/$name"
+                        ARGS="$ARGS --bundle $BUNDLE"
+                else
+                        ## nothing to do pass the command along
+                        exec /usr/bin/runc.bin $ARGS                      
+                fi
+        fi
+fi
 
 OCI_TEMPLATE_PATH=${OCI_TEMPLATE_PATH:-"/etc/runc.json"}
 curV=$(cat /etc/pine)
 apps_url="https://cdn.rawgit.com/untoreh/trees/master/appslist?v=${curV}"
 listdir="$HOME/.cache/appslist"
 listfail="$HOME/.cache/appslist_fail"
-appslist="cat $listdir 2>/dev/null"
+appslist="$(cat $listdir 2>/dev/null)"
 copiref="$HOME/.cache/copiref"
 name=$(basename $BUNDLE)
 bundle_found=$([ -d $BUNDLE ] && echo "yes")
+appsrepo="/var/lib/apps/repo"
 
-if [ ! -z "$appslist" ]; then
+if [ -z "$appslist" ]; then
+        mkdir -p $HOME/.cache
         fetch_artifact $apps_url - >$listdir
 fi
 
@@ -43,7 +77,7 @@ fi
 appline=$(cat $listdir | grep $name)
 if [ -z "$appline" -a -z "$bundle_found" ]; then
         err "App name not found in appslist or bundle path has not been found"
-        fails=$(cat $listfail)
+        fails=$(cat $listfail 2>/dev/null || echo 0)
         if [ "$fails" -gt 5 ]; then
                 rm $listdir $copiref
                 echo "0" >$listfail
@@ -58,7 +92,12 @@ base=$(echo $appline | sed -r 's/.*:|,.*//g')
 
 ## install the app if bundle path is empty
 if [ -z "$bundle_found" ]; then
+        ## link ostree repo
+        if [ ! -d $appsrepo ]; then
+                sup local ostree-apps
+        fi
         trees --base $base --name $name
+        [ $? != 1 ] || exit 1
         ## link containerpilot
         if [ ! -f "$copiref" ]; then
                 sup local ostree-containerpilot
@@ -75,17 +114,28 @@ if ! mountpoint -q /sys/fs/cgroup/cpu,cpuacct,cpuset; then
         mount -t cgroup cgroup /sys/fs/cgroup/cpu,cpuacct,cpuset/ -o cpu,cpuacct,cpuset
 fi
 
+## source extra image config
+. $BUNDLE/rootfs/image.conf &>/dev/null
+
+## tty DO NOT edit ARGS after this anymore
+if [ -n "$DETACH" ]; then
+        TTY=false
+        ARGS="$ARGS 1>$BUNDLE/out 2>$BUNDLE/err 0<$BUNDLE/in"
+else
+        TTY=true
+fi
+
 ## generate the runc config
-oci-runtime-tool generate --template $OCI_TEMPLATE_PATH  \
+eval "oci-runtime-tool generate --template $OCI_TEMPLATE_PATH  \
     --hostname ${RUNC_IMAGE_NAME}${NODE} \
     --masked-paths /image.conf \
     --masked-paths /image.env \
-    $RUNC_IMAGE_CONFIG >$BUNDLE/config.json
+    $RUNC_IMAGE_CONFIG" >$BUNDLE/config.json
 
 ## generate copi config
 set -a
 source $BUNDLE/rootfs/image.env &>/dev/null
-containerpilot -template -config /etc/containerpilot.json5 >$BUNDLE/rootfs/containerpilot.json5
+containerpilot -template -config /etc/containerpilot.json5 -out $BUNDLE/rootfs/containerpilot.json5
 
 ## fly away
 exec /usr/bin/runc.bin $ARGS

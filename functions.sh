@@ -203,12 +203,12 @@ fetch_artifact() {
 ## $@ files/folders
 export_stage(){
     [ -z "$pkg" -o -z "$STAGE" ] && err "pkg or STAGE undefined, terminating" && exit 1
-	which hub &>/dev/null || get_hub
-	diff_env >stage.env
-	tar czf ${pkg}_stage_${STAGE}.tgz stage.env $@
+    which hub &>/dev/null || get_hub
+    diff_env >stage.env
+    tar czf ${pkg}_stage_${STAGE}.tgz stage.env $@
 
-	hub release edit -d -a ${pkg}_stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage || \
-	hub release create -d -a ${pkg}_stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage
+    hub release edit -d -a ${pkg}_stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage || \
+    hub release create -d -a ${pkg}_stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage
 }
 
 ## $1 repo 
@@ -216,7 +216,7 @@ import_stage(){
     [ -z "$pkg" -o -z "$STAGE" -o -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
     PREV_STAGE=$((STAGE - 1))
     fetch_artifact ${1}:draft ${pkg}_stage_${PREV_STAGE}.tgz $PWD
-	source stage.env || cat stage.env | tail +2 > stage1.env && source stage1.env
+    source stage.env || cat stage.env | tail +2 > stage1.env && source stage1.env
 }
 
 ## $1 repo
@@ -230,20 +230,21 @@ check_skip_stage(){
 cleanup_stage(){
     [ -z "$pkg" ] && pkg=$PKG
     [ -z "$pkg" ] && err "pkg undefined, terminating" && exit 1
-	which github-release &>/dev/null || get_ghr
+    which github-release &>/dev/null || get_ghr
     local u=${1/\/*} r=${1/*\/}
+    err "cleaning up drafts..."
     github-release delete -u $u -r $r -t ${pkg}_stage
 }
 ## $1 image file path
 ## $2 mount target
 ## mount image, ${lon} populated with loop device number
 mount_image() {
-    umount -Rfd $2
+    umount -Rfd $2 2>/dev/null
     rm -rf $2 && mkdir $2
     lon=0
-    while [ -z "$(losetup -P /dev/loop${lon} $(realpath ${1}) && echo true)" ]; do
+    while [ -z "$(losetup -P /dev/loop${lon} $(realpath ${1}) 2>/dev/null && echo true)" ]; do
         lon=$((lon + 1))
-        [ $lon -gt 10 ] && return 1
+        [ $lon -gt 10 ] && (err "failed mounting image $1" && return 1)
         sleep 1
     done
     ldev=/dev/loop${lon}
@@ -252,17 +253,19 @@ mount_image() {
     for p in $(find /dev/loop${lon}p*); do
         mp=$(echo "$p" | sed 's~'$ldev'~~')
         mkdir -p $tgt/$mp
-        mount -o nouuid $p $tgt/$mp
+        mount -o nouuid $p $tgt/$mp 2>/dev/null
     done
 }
 
 ## $1 overdir
+## $2 lowerdir
 mount_over(){
-    local pkg=$1
+    local pkg=$1 lodir=$2
     [ -z "$pkg" ] && return 1
-    mkdir -p ${pkg} ${pkg}-lo ${pkg}-wo ${pkg}-up
+    [ -z "$lodir" ] && lodir="${pkg}-lo"
+    mkdir -p ${pkg} $lodir ${pkg}-wo ${pkg}-up
     mount -t overlay \
-        -o lowerdir=${pkg}-lo,workdir=${pkg}-wo,upperdir=${pkg}-up \
+        -o lowerdir=$lodir,workdir=${pkg}-wo,upperdir=${pkg}-up \
         none ${pkg} || ( err "overlay failed for $pkg" && exit 1 )
 }
 
@@ -350,6 +353,65 @@ wrap_rootfs() {
     cd -
 }
 
+## mounts the base tree for the pkg
+base_tree(){
+    if [ -z "$pkg" ]; then
+        err "variables not defined."
+        exit 1
+    fi
+    repo_path=$(./fetch-alp-tree.sh | tail -1)
+    repo_local="${PWD}/lrepo"
+    rm -rf ${pkg}
+    ostree checkout --repo=${repo_path} --union ${ref} ${pkg}-lo
+    mount_over $pkg
+    mount_hw $pkg
+    ln -sr ${pkg}/usr/etc ${pkg}/etc
+    mkdir -p ${pkg}/var/cache/apk
+    alias crc="chroot $pkg"
+}
+
+## create tar archives for bare and ovz from the raw files tree
+package_tree(){
+    if [ -z "$pkg" -o \
+        -z "$repo_local" -o \
+        -z "$rem_repo" ]; then
+        err "variables not defined."
+        exit 1
+    fi
+    mount_over $repo_local $repo_path
+    ## commit tree to app branch
+    rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
+        --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
+
+    ## get the last app checksum from remote
+    old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
+    ## get checksum of committed branch
+    new_csum=$(ostree --repo=${repo_local} ls ${pkg} -Cd | awk '{print $5}')
+    ## end if unchanged
+    compare_csums
+
+    ## create delta of app branch
+    ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
+        --inline --min-fallback-size 0 --filename=${rev}
+
+    ## checksum and compress
+    echo $new_csum >${pkg}.sum
+    tar cvf ${pkg}.tar ${rev}
+
+    ## -- ovz --
+    repo_local=$(./fetch-alp_ovz-tree.sh | tail -1)
+    ## commit tree to app branch
+    rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
+        --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
+    ## skip csum comparison, if bare image is different so is ovz
+    ## create delta of app branch
+    ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
+        --inline --min-fallback-size 0 --filename=${rev}
+
+    ## compress
+    tar cvf ${pkg}_ovz.tar ${rev}
+}
+
 ## $@ packages to install
 install_tools() {
     setup=false
@@ -375,6 +437,7 @@ compare_csums() {
         echo $pkg >>file.up
         exit
     fi
+    printc "csums different."
 }
 
 ## fetch github hub bin
@@ -389,7 +452,7 @@ get_hub() {
 get_ghr() {
     mkdir -p /opt/bin
     fetch_artifact aktau/github-release ".*linux-amd64.*.bz2" $PWD
-    mv $(find -name github-release -print -quit) /opt/bin
+    mv $(find -name github-release -print -quit 2>/dev/null) /opt/bin
     export GITHUB_TOKEN=$GIT_TOKEN PATH=/opt/bin:$PATH
 }
 
