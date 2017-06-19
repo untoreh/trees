@@ -1,13 +1,28 @@
 #!/bin/bash -l
+shopt -s extglob
 
 ARGS=$@
 
-BUNDLE=$PWD
+BUNDLE=
+runvar=
+nnkr="--no-new-keyring"
 while [[ $# -gt 0 ]]; do
         key="$1"
         case $key in
                 -b | --bundle)
                         BUNDLE=$2
+                        ;;
+                --no-new-keyring)
+                        nnkr=
+                        ;;
+                run)
+                        runvar=true
+                        ARGS="$ARGS $nnkr"
+                        ;;
+                +([^-]))
+                        if [ -n "$runvar" ]; then
+                                name=$key
+                        fi
                         ;;
                 -*=* | --*=*)
                         k=${key/=*}
@@ -22,8 +37,14 @@ while [[ $# -gt 0 ]]; do
         shift
 done
 
-## source extra image config
-. $BUNDLE/rootfs/image.conf &>/dev/null
+if [ -z "$BUNDLE" ]; then
+        ## check if current dir is a bundle
+        if [ -s config.json ]; then
+                BUNDLE=$PWD
+        else
+                BUNDLE="/sysroot/ostree/repo/$name"
+        fi
+fi
 
 OCI_TEMPLATE_PATH=${OCI_TEMPLATE_PATH:-"/etc/runc.json"}
 curV=$(cat /etc/pine)
@@ -74,6 +95,9 @@ if ! mountpoint -q /sys/fs/cgroup/cpu,cpuacct,cpuset; then
         mkdir /sys/fs/cgroup/cpu,cpuacct,cpuset
         mount -t cgroup cgroup /sys/fs/cgroup/cpu,cpuacct,cpuset/ -o cpu,cpuacct,cpuset
 fi
+
+## source extra image config
+. $BUNDLE/rootfs/image.conf &>/dev/null
 
 ## generate the runc config
 oci-runtime-tool generate --template $OCI_TEMPLATE_PATH  \

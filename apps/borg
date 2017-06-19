@@ -1,0 +1,49 @@
+#!/bin/bash
+
+source functions.sh
+
+rem_repo="untoreh/trees"
+ref="trunk"
+pkg="borg"
+b2_fuse="https://github.com/sondree/b2_fuse"
+mgt="https://github.com/megous/megatools"
+hbf="https://github.com/TurboGit/hubicfuse"
+hbc="http://mir7.ovh.net/ovh-applications/hubic/hubiC-Linux/2.1.0/hubiC-Linux-2.1.0.53-linux.tar.gz"
+
+
+## init tree
+base_tree
+
+## build app tree
+prepare_rootfs ${pkg}
+## b2fuse b2(cli)
+git clone $b2_fuse ${pkg}/b2_fuse
+apkc ${pkg} add borgbackup python py2-pip
+crc pip install fusepy b2
+crc ln /b2_fuse/b2_fuse.py /usr/local/bin
+## mega(cli)
+apk add alpine-sdk libressl-dev glib-dev curl-dev asciidoc autoconf automake
+apkc ${pkg} add glib curl bash openrc
+git clone $mgt megatools && cd megatools && ./autogen.sh &&  make 
+install -c megadf megadl megaget megals megamkdir megaput megareg megarm megacopy ${pkg}/usr/local/bin
+## hubicfuse 
+apk add git alpine-sdk libxml2-dev curl-dev fuse-dev json-c-dev file-dev
+apkc ${pkg} libxml2 json-c file
+git clone $hbf hubicfuse && cd hubicfuse && ./configure && make
+install -c hubicfuse ${pkg}/usr/local/bin
+## hubic(cli)
+cat << EOF >>${pkg}/etc/apk/repositories
+http://dl-cdn.alpinelinux.org/alpine/edge/testing
+EOF
+apkc ${pkg} add --update mono make dbus
+fetch_artifact $hbc $pkg
+crc sh -c "cd /hubic && make install"
+crc apk del --purge make
+rm -rf ${pkg}/hubic
+rm -rf ${pkg}/var/cache/apk/*
+
+copy_image_cfg $pkg
+wrap_rootfs ${pkg}
+
+## pack the tree
+package_tree

@@ -350,6 +350,62 @@ wrap_rootfs() {
     cd -
 }
 
+## mounts the base tree for the pkg
+base_tree(){
+    if [ -z "$pkg" ]; then
+        err "variables not defined."
+        exit 1
+    fi
+    repo_path=$(./fetch-alp-tree.sh | tail -1)
+    repo_local="${PWD}/lrepo"
+    rm -rf ${pkg}
+    ostree checkout --repo=${repo_path} --user-mode ${ref} ${pkg}-lo
+    mount_over $pkg
+    alias crc="chroot $pkg"
+}
+
+## create tar archives for bare and ovz from the raw files tree
+package_tree(){
+    if [ -z "$pkg" -o \
+        -z "$repo_local" -o \
+        -z "$rem_repo" -o \
+    ]; then
+        err "variables not defined."
+        exit 1
+    fi
+    ## commit tree to app branch
+    rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
+        --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
+
+    ## get the last app checksum from remote
+    old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
+    ## get checksum of committed branch
+    new_csum=$(ostree --repo=${repo_local} ls ${pkg} -Cd | awk '{print $5}')
+    ## end if unchanged
+    compare_csums
+
+    ## create delta of app branch
+    ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
+        --inline --min-fallback-size 0 --filename=${rev}
+
+    ## checksum and compress
+    echo $new_csum >${pkg}.sum
+    tar cvf ${pkg}.tar ${rev}
+
+    ## -- ovz --
+    repo_local=$(./fetch-alp_ovz-tree.sh | tail -1)
+    ## commit tree to app branch
+    rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
+        --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
+    ## skip csum comparison, if bare image is different so is ovz
+    ## create delta of app branch
+    ostree --repo=${repo_local} static-delta generate --from=${ref} ${pkg} \
+        --inline --min-fallback-size 0 --filename=${rev}
+
+    ## compress
+    tar cvf ${pkg}_ovz.tar ${rev}
+}
+
 ## $@ packages to install
 install_tools() {
     setup=false
