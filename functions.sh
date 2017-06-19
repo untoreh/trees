@@ -375,6 +375,7 @@ package_tree(){
         err "variables not defined."
         exit 1
     fi
+    repo_local=$repo_path
     ## commit tree to app branch
     rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
         --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
