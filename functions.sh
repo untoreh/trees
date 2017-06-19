@@ -232,6 +232,7 @@ cleanup_stage(){
     [ -z "$pkg" ] && err "pkg undefined, terminating" && exit 1
     which github-release &>/dev/null || get_ghr
     local u=${1/\/*} r=${1/*\/}
+    err "cleaning up drafts..."
     github-release delete -u $u -r $r -t ${pkg}_stage
 }
 ## $1 image file path
@@ -448,7 +449,7 @@ get_hub() {
 get_ghr() {
     mkdir -p /opt/bin
     fetch_artifact aktau/github-release ".*linux-amd64.*.bz2" $PWD
-    mv $(find -name github-release -print -quit) /opt/bin
+    mv $(find -name github-release -print -quit 2>/dev/null) /opt/bin
     export GITHUB_TOKEN=$GIT_TOKEN PATH=/opt/bin:$PATH
 }
 
