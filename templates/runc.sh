@@ -120,6 +120,7 @@ fi
 ## tty DO NOT edit ARGS after this anymore
 if [ -n "$DETACH" ]; then
         TTY=false
+        [ -p $BUNDLE/in ] || mkfifo $BUNDLE/in
         ARGS="$ARGS 1>$BUNDLE/out 2>$BUNDLE/err 0<$BUNDLE/in"
 else
         TTY=true
@@ -130,6 +131,7 @@ eval "oci-runtime-tool generate --template $OCI_TEMPLATE_PATH  \
     --hostname ${RUNC_IMAGE_NAME}${NODE} \
     --masked-paths /image.conf \
     --masked-paths /image.env \
+    --tty=$TTY \
     $RUNC_IMAGE_CONFIG" >$BUNDLE/config.json
 
 ## generate copi config
@@ -138,4 +140,4 @@ source $BUNDLE/rootfs/image.env &>/dev/null
 containerpilot -template -config /etc/containerpilot.json5 -out $BUNDLE/rootfs/containerpilot.json5
 
 ## fly away
-exec /usr/bin/runc.bin $ARGS
+eval "exec /usr/bin/runc.bin $ARGS"
