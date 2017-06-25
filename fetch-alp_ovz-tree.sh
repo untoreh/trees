@@ -5,8 +5,12 @@ alprepo="untoreh/pine"
 artifact="rootfs.pine_ovz.tgz"
 dest_path="release_ovz"
 
+## squashfs
+cp -p $PWD/utils/*squashfs /usr/bin
+
 ## fetch ovz rootfs
-fetch_artifact $alprepo $artifact ${dest_path}
+fetch_artifact $alprepo $artifact - >$artifact
+unsquashfs -d $dest_path $artifact 
 repo=${dest_path}/ostree/repo
 
 ## we now have the base alp_ovz tree
