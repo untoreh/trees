@@ -2,7 +2,7 @@
 source functions.sh
 
 alprepo="untoreh/pine"
-artifact="rootfs.pine_ovz.tgz"
+artifact="rootfs.pine_ovz.sq"
 dest_path="release_ovz"
 
 ## squashfs
