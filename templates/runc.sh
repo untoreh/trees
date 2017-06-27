@@ -1,4 +1,4 @@
-#!/bin/bash -li
+#!/bin/bash -lix
 ## this script needs the -i(nteractive) flag to spawn ttys for detached containers
 shopt -s extglob
 
@@ -46,13 +46,13 @@ if [ -z "$BUNDLE" ]; then
         ## check if current dir is a bundle
         if [ -s config.json -a -d rootfs -a -n "$runvar" ]; then
                 BUNDLE=$PWD
-        else 
+        else
                 if [ -n "$name" ]; then
                         BUNDLE="/sysroot/ostree/repo/$name"
                         ARGS="$ARGS --bundle $BUNDLE"
                 else
                         ## nothing to do pass the command along
-                        exec /usr/bin/runc.bin $ARGS                      
+                        exec /usr/bin/runc.bin $ARGS
                 fi
         fi
 fi
@@ -120,8 +120,13 @@ fi
 ## tty DO NOT edit ARGS after this anymore
 if [ -n "$DETACH" ]; then
         TTY=false
-        [ -p $BUNDLE/in ] || mkfifo $BUNDLE/in
-        ARGS="$ARGS 1>$BUNDLE/out 2>$BUNDLE/err 0<$BUNDLE/in"
+        CT="/var/run/runc/status/${name}"
+        mkdir -p $CT
+        rm -f $CT/{in,out}
+        if [ -z "$(echo $ARGS | grep '\--pid-file')" ]; then
+                rm -f $BUNDLE/proc.pid
+                ARGS="$ARGS --pid-file $CT/proc.pid"
+        fi
 else
         TTY=true
 fi
@@ -140,4 +145,8 @@ source $BUNDLE/rootfs/image.env &>/dev/null
 containerpilot -template -config /etc/containerpilot.json5 -out $BUNDLE/rootfs/containerpilot.json5
 
 ## fly away
-eval "exec /usr/bin/runc.bin $ARGS"
+if [ -n "$DETACH" ]; then
+        eval "exec empty -f -i $CT/in -o $CT/out exec sh -c '/usr/bin/runc.bin $ARGS ; procpid=\$(cat $CT/proc.pid); exec watch -gx kill -0 \$procpid'"
+else
+        eval "exec /usr/bin/runc.bin $ARGS"
+fi
