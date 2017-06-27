@@ -340,7 +340,7 @@ wrap_rootfs() {
         for l in usr/etc,etc usr/lib,lib usr/lib,lib64 usr/bin,bin usr/sbin,sbin; do
             IFS=','
             set -- $l
-            cp -a --remove-destination ${2}/* ${1}
+            cp -a --remove-destination ${2}/* ${1} &>/dev/null
             rm -rf $2
             ln -sr $1 $2
             unset IFS
