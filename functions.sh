@@ -384,7 +384,7 @@ package_tree(){
         --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
 
     ## get the last app checksum from remote
-    old_csum=$(fetch_artifact $rem_repo ${pkg}.sum -)
+    old_csum=$(fetch_artifact ${rem_repo}:${pkg} ${pkg}.sum -)
     ## get checksum of committed branch
     new_csum=$(ostree --repo=${repo_local} ls ${pkg} -Cd | awk '{print $5}')
     ## end if unchanged
