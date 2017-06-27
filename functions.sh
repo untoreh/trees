@@ -53,8 +53,9 @@ switch_release_tag(){
     tid=$(tag_id ${1} ${2})
     new_tid=$(tag_id ${1} ${3})
     curl -X DELETE -u $GIT_USER:$GIT_TOKEN https://api.github.com/repos/${1}/releases/${new_tid}
+    ## also specify master otherwise tag sha is not updated despite it being master anyway
     curl -X PATCH -u $GIT_USER:$GIT_TOKEN \
-    -d '{"tag_name": "'${3}'", "name": "'${3}'"}' \
+    -d '{"tag_name": "'${3}'", "name": "'${3}'", "target_commitish": "master"}' \
     https://api.github.com/repos/${1}/releases/${tid}
 }
 
