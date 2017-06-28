@@ -7,6 +7,9 @@ cf="\033[0m"
 printc() {
     echo -e "${cn}${@}${cf}"
 }
+printdb() {
+    [ -n "$PRINT_DEBUG" ] && echo -e "${cn}${@}${cf}"
+}
 err() {
     echo $@ 1>&2
 }
