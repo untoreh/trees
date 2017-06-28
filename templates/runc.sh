@@ -73,7 +73,7 @@ if [ -n "$ENTER" ]; then
 	for n in $(ls /proc/${CT_PID}/ns); do
 		nsargs="$nsargs -${n:0:1}"
 	done
-	exec nsenter -t $CT_PID $nsargs chroot ${ostree} ${ARGS/?(* $name |* $name)}
+	exec nsenter -F -t $CT_PID $nsargs chroot ${ostree} ${ARGS/?(* $name |* $name)}
 fi
 
 if [ -z "$BUNDLE" ]; then
