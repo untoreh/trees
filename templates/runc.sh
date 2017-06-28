@@ -164,7 +164,7 @@ if [ -n "$DETACH" ]; then
 	mkdir -p $CT
 	rm -f $CT/{in,out}
 	if [ -z "$(echo $ARGS | grep '\--pid-file')" ]; then
-		rm -f $BUNDLE/proc.pid
+		rm -f $CT/proc.pid
 		ARGS="$ARGS --pid-file $CT/proc.pid"
 	fi
 else
@@ -189,7 +189,7 @@ containerpilot -template -config /etc/containerpilot.json5 -out $BUNDLE/rootfs/c
 
 ## fly away
 if [ -n "$DETACH" ]; then
-	eval "exec empty -f -i $CT/in -o $CT/out sh -c '/usr/bin/runc.bin $ARGS ; procpid=\$(cat $CT/proc.pid); exec watch -gx kill -0 \$procpid'"
+	eval "exec empty -f -i $CT/in -o $CT/out sh -c '/usr/bin/runc.bin $ARGS && procpid=\$(cat $CT/proc.pid); [ -n \"\$procpid\" ] && exec watch -gx kill -0 \$procpid'"
 else
 	eval "exec /usr/bin/runc.bin $ARGS"
 fi
