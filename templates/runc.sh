@@ -6,6 +6,7 @@ ARGS=$@
 
 HELP=
 ENTER=
+DELETE=
 BUNDLE=
 DETACH=
 runvar=
@@ -38,9 +39,18 @@ while [[ $# -gt 0 ]]; do
 			runvar=true
 			ENTER=1
 			;;
-		run | create)
+		run)
 			runvar=true
 			ARGS="$ARGS $nnkr"
+			;;
+		create)
+			runvar=true
+			ARGS="$ARGS $nnkr"
+			DETACH=true
+			;;
+		delete)
+			runvar=true
+			DELETE=1
 			;;
 		+([^-]))
 			if [ -n "$runvar" -a -z "$name" ]; then
@@ -60,7 +70,10 @@ while [[ $# -gt 0 ]]; do
 	shift
 done
 
-## utils
+## common vars
+appsrepo="/var/lib/apps/repo"
+
+## help subroute
 if [ -n "$HELP" ]; then
 	/usr/bin/runc.bin $ARGS
 	cat <<-EOF
@@ -84,13 +97,24 @@ if [ -n "$ENTER" ]; then
 	exec nsenter -F -t $CT_PID $nsargs chroot ${ostree} ${ARGS/?(* $name |* $name)}
 fi
 
+## delete subroute
+if [ -n "$DELETE" -a -n "$name" ]; then
+        /usr/bin/runc.bin $ARGS
+        ## delete checked out tree
+		if [ $? = 0 ]; then
+        	rm -rf ${appsrepo}/${name}
+		fi
+        exit
+fi
+
+## run/create subroute
 if [ -z "$BUNDLE" ]; then
 	## check if current dir is a bundle
 	if [ -s config.json -a -d rootfs -a -n "$runvar" ]; then
 		BUNDLE=$PWD
 	else
 		if [ -n "$name" ]; then
-			BUNDLE="/sysroot/ostree/repo/$name"
+			BUNDLE="${appsrepo}/${name}"
 			ARGS="$ARGS --bundle $BUNDLE"
 		else
 			## nothing to do pass the command along
@@ -108,7 +132,6 @@ appslist="$(cat $listdir 2>/dev/null)"
 copiref="$HOME/.cache/copiref"
 name=$(basename $BUNDLE)
 bundle_found=$([ -d $BUNDLE ] && echo "yes")
-appsrepo="/var/lib/apps/repo"
 
 if [ -z "$appslist" ]; then
 	mkdir -p $HOME/.cache
@@ -140,9 +163,14 @@ if [ -z "$bundle_found" ]; then
 		printdb "linking ostree repo for apps.."        
 		sup local ostree-apps
 	fi
-	printdb "installing app image.."
-	trees --base $base --name $name
-	[ $? != 1 ] || exit 1
+	if [ -z "$(ostree refs $name)" ]; then
+		printdb "installing app image.."
+		trees --base $base --name $name
+		[ $? != 1 ] || exit 1
+	else
+		printdb "checking out app.."
+		trees checkout --base $base --name $name
+	fi
 	## link containerpilot
 	if [ ! -f "$copiref" ]; then
 		printdb "tagging container pilot ostree ref.."
