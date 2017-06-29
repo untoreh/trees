@@ -23,6 +23,14 @@ while [[ $# -gt 0 ]]; do
 		--no-new-keyring)
 			nnkr=
 			;;
+		-soc | --skip-oci-config)
+			SKIP_OCI_CONFIG=1
+			ARGS=${ARGS//*(-soc|--skip-oci-config)/}
+			;;
+		-scc | --skip-copi-config)
+			SKIP_COPI_CONFIG=1
+			ARGS=${ARGS//*(-scc|--skip-copi-config)/}
+			;;
 		-h | --help)
 			HELP=1
 			;;      
@@ -172,20 +180,23 @@ else
 fi
 
 ## generate the runc config
-printdb "generating container config.."
-eval "oci-runtime-tool generate --template $OCI_TEMPLATE_PATH  \
-    --hostname ${RUNC_IMAGE_NAME}${NODE} \
-    --masked-paths /image.conf \
-    --masked-paths /image.env \
-    --tty=$TTY \
-    $RUNC_IMAGE_CONFIG" >$BUNDLE/config.json
+if [ -z "$SKIP_OCI_CONFIG" ]; then
+	printdb "generating container config.."
+	eval "oci-runtime-tool generate --template $OCI_TEMPLATE_PATH  \
+		--hostname ${RUNC_IMAGE_NAME}${NODE} \
+		--masked-paths /image.conf \
+		--masked-paths /image.env \
+		--tty=$TTY \
+		$RUNC_IMAGE_CONFIG" >$BUNDLE/config.json
+fi
 
 ## generate copi config
-printdb "generating copi config.."
-set -a
-. $BUNDLE/rootfs/image.env &>/dev/null
-containerpilot -template -config /etc/containerpilot.json5 -out $BUNDLE/rootfs/containerpilot.json5
-
+if [ -z "$SKIP_COPI_CONFIG" ]; then
+	printdb "generating copi config.."
+	set -a
+	. $BUNDLE/rootfs/image.env &>/dev/null
+	containerpilot -template -config /etc/containerpilot.json5 -out $BUNDLE/rootfs/containerpilot.json5
+fi
 
 ## fly away
 if [ -n "$DETACH" ]; then
