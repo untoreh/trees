@@ -8,7 +8,7 @@ env:
 install:
 - source travis-helper.sh
 - handle_build
-- env >build.env
+- env -0 | tr '\n' '\v' | tr '\0' '\n' | sed -r 's/\v/\\n/' >build.env
 - docker run -d --env-file build.env --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000
 - docker exec ct ./prepare.sh
 script: docker exec ct ./run.sh $PKG
