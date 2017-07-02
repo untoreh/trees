@@ -23,7 +23,7 @@ crc apt-get clean
 crc rm -rf /var/lib/apt/lists/*
 copy_image_cfg $pkg
 umount_hw $pkg
-wrap_rootfs $pkg -s
+wrap_rootfs $pkg -c
 
 ## commit tree to app branch
 rev=$(ostree --repo=${repo_path} commit -s "$(date)-${pkg}-build" \

@@ -32,7 +32,7 @@ for b in goyacc pd-ctl pd-recover pd-tso-bench tikv-ctl; do
     mv artf/${artifact}/bin/${b} ${pkg_ctl}/usr/bin
 done
 copy_image_cfg $pkg_ctl
-wrap_rootfs ${pkg_ctl}
+wrap_rootfs ${pkg_ctl} -c
 
 for d in $pkg $pkg_ctl; do
     ## commit tree to app branch

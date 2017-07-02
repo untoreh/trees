@@ -194,7 +194,7 @@ stage_2() {
 	mkdir -p $pkg/usr/lib/modules
 	mv $outp/nginx $pkg/usr/sbin
 	mv $outp/*.so* $pkg/usr/lib
-	wrap_rootfs $pkg
+	wrap_rootfs $pkg -c
 
 	## commit tree to app branch
 	rev=$(ostree --repo=$repo_local commit -s "$(date)-${pkg}-build" \

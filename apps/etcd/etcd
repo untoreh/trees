@@ -16,7 +16,7 @@ cp -a $repo_path $repo_local
 prepare_rootfs ${pkg}
 apkc ${pkg} add ${pkg}
 copy_image_cfg $pkg
-wrap_rootfs ${pkg}
+wrap_rootfs ${pkg} -c
 
 ## commit tree to app branch
 rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \

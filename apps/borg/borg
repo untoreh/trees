@@ -44,7 +44,7 @@ crc apk del --purge make
 rm -rf ${pkg}/hubic
 
 copy_image_cfg $pkg
-wrap_rootfs ${pkg}
+wrap_rootfs ${pkg} -c
 
 ## pack the tree
 package_tree

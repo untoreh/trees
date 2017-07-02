@@ -332,7 +332,7 @@ copy_image_cfg() {
 }
 
 ## $1 ref
-## $2 skip links
+## $2 skip links/ct root
 ## routing after-modification actions for ostree checkouts
 wrap_rootfs() {
     [ -z "$1" ] && (
@@ -340,7 +340,16 @@ wrap_rootfs() {
         exit 1
     )
     cd ${1}
-    if [ "$2" != "-s" ]; then
+    case "$2" in
+        "-s")
+        ;;
+        "-c")
+        ## delete links
+        rm -f root sysroot srv tmp opt mnt home ostree 2>/dev/null
+        mkdir -p  root sysroot srv tmp opt mnt home \
+            var/log var/cache var/spool var/tmp
+        ;;
+        *) 
         for l in usr/etc,etc usr/lib,lib usr/lib,lib64 usr/bin,bin usr/sbin,sbin; do
             IFS=','
             set -- $l
@@ -349,7 +358,8 @@ wrap_rootfs() {
             ln -sr $1 $2
             unset IFS
         done
-    fi
+        ;;
+    esac
     rm -rf var/cache/apk/*
     umount -Rf dev proc sys run &>/dev/null
     rm -rf dev proc sys run
