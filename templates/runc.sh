@@ -6,6 +6,8 @@ ARGS=$@
 
 HELP=
 ENTER=
+ATTACH=
+CD=
 DELETE=
 BUNDLE=
 DETACH=
@@ -35,9 +37,17 @@ while [[ $# -gt 0 ]]; do
 		-h | --help)
 			HELP=1
 			;;
-		enter)
+		bun | bundle)
+			runvar=true
+			CD=1
+			;;
+		ent | enter)
 			runvar=true
 			ENTER=1
+			;;
+		att | attach)
+			runvar=true
+			ATTACH=1
 			;;
 		run)
 			runvar=true
@@ -78,15 +88,17 @@ if [ -n "$HELP" ]; then
 	/usr/bin/runc.bin $ARGS
 	cat <<-EOF
 	HELPER:
-	- set PRINT_DEBUG for runtime info
-	- use the enter (runc enter [..]) command if exec does not work
+	PRINT_DEBUG for runtime info
+	ent, enter  			(runc enter [..]) command if exec does not work
+	bun, bundle			 	setup shell command to quickly cd into app rootfs
+	att, attach 			see container logs			
 
 	EOF
 	exit
 fi
 
 ## enter subroute
-if [ -n "$ENTER" ]; then
+if [ -n "$ENTER" -a -n "$name" ]; then
 	. /proc/cmdline
 	nsargs=
 	CT="/var/run/runc.d/${name}"
@@ -97,20 +109,39 @@ if [ -n "$ENTER" ]; then
 	exec nsenter -F -t $CT_PID $nsargs chroot ${ostree} ${ARGS/?(* $name |* $name)/}
 fi
 
+## attach subroute
+if [ -n "$ATTACH" -a -n "$name" ]; then
+	if [ ! -e /var/run/runc.d/${name}/out ]; then
+		echo "no output found.."
+		exit 1
+	else
+		exec cat /var/run/runc.d/${name}/out
+	fi
+fi
+
 ## delete subroute
 if [ -n "$DELETE" -a -n "$name" ]; then
 	/usr/bin/runc.bin $ARGS
 	## delete checked out tree
 	if [ $? = 0 ]; then
 		rm -rf ${appsrepo}/${name}
+		exit
+	else
+		exit 1
 	fi
-	exit
+fi
+
+## cd subroute
+if [ -n "$CD" ]; then
+	exec echo "bunc(){
+		 	cd $appsrepo/\$1 2>/dev/null || echo 'app rootfs not found..';
+		 }" | tee -a /etc/profile.d/runc.sh
 fi
 
 ## run/create subroute
 if [ -z "$BUNDLE" ]; then
-	## check if current dir is a bundle
-	if [ -s config.json -a -d rootfs -a -n "$runvar" ]; then
+	## check if current dir is a bundle ( no name provided )
+	if [ -s config.json -a -d rootfs -a -n "$runvar" -a -z "$name" ]; then
 		BUNDLE=$PWD
 	else
 		if [ -n "$name" ]; then

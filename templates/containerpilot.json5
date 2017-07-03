@@ -33,11 +33,9 @@
                    "{{ print $exec}}",
                    {{- end}}
                    {{- if $args }}
-                   {{ range $a := $args | split "\"" -}}
-                   {{ $r := print $a | split "=" | join " " | split " " -}}
+                   {{ $r := print $args | split ",," -}}
                    {{- range $r1 := $r -}}
                    "{{ print $r1 }}",
-                   {{- end}}
                    {{- end}}
                    {{- end}}
                    {{- if $args -}}
