@@ -51,7 +51,7 @@
                health: {
                 exec: "{{ $health }}",
                 interval: {{ ( env ( printf "%s_health_inter" $s)) | default 300}},
-                ttl: {{ ( env ( printf "%s_health_ttl" $s)) | default 300}},
+                ttl: {{ ( env ( printf "%s_health_ttl" $s)) | default 360}},
                 timeout: "{{ ( env ( printf "%s_health_to" $s)) | default "60s"}}",
                }
                {{- end}}

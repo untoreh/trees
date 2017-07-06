@@ -6,6 +6,7 @@ ARGS=$@
 
 HELP=
 ENTER=
+RESTART=
 ATTACH=
 CD=
 DELETE=
@@ -21,7 +22,7 @@ while [[ $# -gt 0 ]]; do
 			BUNDLE=$2
 			;;
 		-d | --detach)
-			DETACH=true
+			DETACH=1
 			;;
 		--no-new-keyring)
 			nnkr=
@@ -56,7 +57,13 @@ while [[ $# -gt 0 ]]; do
 		create)
 			runvar=true
 			ARGS="$ARGS $nnkr"
-			DETACH=true
+			DETACH=1
+			;;
+		res | restart)
+			runvar=true
+			ARGS="${ARGS/#restart/run} $nnkr"
+			RESTART=1
+			DETACH=1
 			;;
 		delete)
 			runvar=true
@@ -138,6 +145,23 @@ if [ -n "$CD" ]; then
 		 }" | tee -a /etc/profile.d/runc.sh
 fi
 
+## restart subroute
+if [ -n "$RESTART" -a -n "$name" ]; then
+	BUNDLE=$(/usr/bin/runc.bin list | grep -E "^$name" | awk '{print $4}')
+	if [ -n "$BUNDLE" ]; then 
+		ARGS="${ARGS/@( ${name} )/ ${name} -d --bundle ${BUNDLE} }"
+		/usr/bin/runc.bin kill ${name}
+		timeout 10 bash -c "while [ \"$(/usr/bin/runc.bin list | \
+			grep -E ^$name | awk '{print $3}')\" != stopped ]; do
+			sleep 0.5
+		done"
+		/usr/bin/runc.bin delete ${name}
+	else
+		err "container $name does not exist"
+		exit 1
+	fi
+fi
+
 ## run/create subroute
 if [ -z "$BUNDLE" ]; then
 	## check if current dir is a bundle ( no name provided )
@@ -212,6 +236,11 @@ if ! mountpoint -q /sys/fs/cgroup/cpu,cpuacct,cpuset; then
 	mount -t cgroup cgroup /sys/fs/cgroup/cpu,cpuacct,cpuset/ -o cpu,cpuacct,cpuset
 fi
 
+## copy local image files if avail
+if [ -d /srv/${name} ]; then
+	cp /srv/${name}/{image.conf,image.env} -t $BUNDLE/rootfs &>/dev/null
+fi
+
 ## source extra image config
 . $BUNDLE/rootfs/image.conf &>/dev/null
 
@@ -230,14 +259,21 @@ else
 fi
 
 ## generate the runc config
+## fix for unavailable caps
 if [ -z "$SKIP_OCI_CONFIG" ]; then
 	printdb "generating container config.."
 	eval "oci-runtime-tool generate --template $OCI_TEMPLATE_PATH  \
 		--hostname ${RUNC_IMAGE_NAME}${NODE} \
 		--masked-paths /image.conf \
 		--masked-paths /image.env \
+		--masked-paths /prestart.sh \
+		--masked-paths /poststart.sh \
+		--masked-paths /poststop.sh \
 		--tty=$TTY \
-		$RUNC_IMAGE_CONFIG" >$BUNDLE/config.json
+		$RUNC_IMAGE_CONFIG" |  \
+		grep -Ev "CAP_SYSLOG|CAP_WAKE_ALARM|CAP_BLOCK_SUSPEND|CAP_AUDIT_READ" | \
+		sed -r 's/(CAP_MAC_ADMIN"),/\1/' \
+		>$BUNDLE/config.json
 fi
 
 ## generate copi config

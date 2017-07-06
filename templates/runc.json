@@ -11,17 +11,17 @@
         },
         {
             "path": "/usr/bin/sh",
-            "args": ["sh", "-c", "[ -s rootfs/prestart.sh ] && rootfs/prestart.sh || true"]
+            "args": ["sh", "-c", "[ -s rootfs/prestart.sh ] && exec sh rootfs/prestart.sh || true"]
         }],
         "poststart": [
         {
             "path": "/usr/bin/sh",
-            "args": ["sh", "-c", "[ -s rootfs/poststart.sh ] && rootfs/poststart.sh || true"]
+            "args": ["sh", "-c", "[ -s rootfs/poststart.sh ] && exec sh rootfs/poststart.sh || true"]
         }
         ],
         "poststop": [{
             "path": "/usr/bin/sh",
-            "args": ["sh", "-c", "[ -s rootfs/poststop.sh ] && rootfs/poststop.sh || true"]
+            "args": ["sh", "-c", "[ -s rootfs/poststop.sh ] && exec sh rootfs/poststop.sh || true"]
         }
         ]
     },
@@ -41,7 +41,7 @@
             "containerpilot.json5"
         ],
         "env": [
-            "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "PATH=/exec:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
             "TERM=xterm"
         ],
         "cwd": "/",
