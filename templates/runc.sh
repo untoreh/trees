@@ -151,8 +151,8 @@ if [ -n "$RESTART" -a -n "$name" ]; then
 	if [ -n "$BUNDLE" ]; then 
 		ARGS="${ARGS/@( ${name} )/ ${name} -d --bundle ${BUNDLE} }"
 		/usr/bin/runc.bin kill ${name}
-		timeout 10 bash -c "while [ \"$(/usr/bin/runc.bin list | \
-			grep -E ^$name | awk '{print $3}')\" != stopped ]; do
+		timeout 10 bash -c "while [ \"\$(/usr/bin/runc.bin list | \
+			grep -E ^$name | awk '{print \$3}')\" != stopped ]; do
 			sleep 0.5
 		done"
 		/usr/bin/runc.bin delete ${name}

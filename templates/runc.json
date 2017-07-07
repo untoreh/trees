@@ -216,6 +216,15 @@
             ]
         },
         {
+            "destination": "/etc/hosts",
+            "type": "bind",
+            "source": "/etc/hosts",
+            "options": [
+                "ro",
+                "bind"
+            ]
+        },
+        {
             "destination": "/tmp",
             "type": "tmpfs",
             "source": "tmpfs",
@@ -239,6 +248,14 @@
             "destination": "/var/run",
             "type": "bind",
             "source": "rootfs/run",
+            "options": [
+                "bind"
+            ]
+        },
+        {
+            "destination": "/var/log",
+            "type": "bind",
+            "source": "/srv/log",
             "options": [
                 "bind"
             ]
