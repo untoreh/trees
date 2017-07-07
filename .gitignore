@@ -15,6 +15,7 @@ image.pine.sum
 ./libpng*
 ./modpagespeed*
 ./*.env
+.vscode/
 # User-specific stuff:
 .idea/
 .idea/**/workspace.xml
