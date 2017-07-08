@@ -8,16 +8,16 @@ pkg="imageproxy"
 img_repo="willnorris.com/go/imageproxy/cmd/imageproxy"
 
 ## init tree
-base_tree
+base_tree none
 
 ## build app tree
 ## build imageproxy
 install_tools go musl-dev
-mkdir -p /go
-export GOPATH=/go GOROOT=/usr/lib/go
+go_env
 go get $img_repo
-cp /go/bin/${pkg} ${pkg}/${pkg}
+cp ${GOPATH}/bin/${pkg} ${pkg}/${pkg}
 chmod +x ${pkg}/${pkg}
+
 copy_image_cfg $pkg
 wrap_rootfs ${pkg} -c
 

@@ -310,6 +310,12 @@ apkc() {
     apk --arch x86_64 --allow-untrusted --root ${root_path} $initdb --no-cache $@
 }
 
+## go env setup
+go_env(){
+    mkdir -p /go
+    export GOPATH=/go GOROOT=/usr/lib/go
+}
+
 ## $1 ref
 ## routine pre-modification actions for ostree checkouts
 prepare_rootfs() {
@@ -373,13 +379,15 @@ base_tree(){
         err "variables not defined."
         exit 1
     fi
-    repo_path=$(./fetch-alp-tree.sh | tail -1)
-    repo_local="${PWD}/lrepo"
     rm -rf ${pkg}
-    ostree checkout --repo=${repo_path} --union ${ref} ${pkg}-lo
-    mount_over $pkg
+    if [ "$1" != none ]; then
+        repo_path=$(./fetch-${1:-alp}-tree.sh | tail -1)
+        repo_local="${PWD}/lrepo"
+        ostree checkout --repo=${repo_path} --union ${ref} ${pkg}-lo
+        ln -sr ${pkg}/usr/etc ${pkg}/etc
+        mount_over $pkg
+    fi
     mount_hw $pkg
-    ln -sr ${pkg}/usr/etc ${pkg}/etc
     mkdir -p ${pkg}/var/cache/apk
     alias crc="chroot $pkg"
 }
@@ -387,10 +395,15 @@ base_tree(){
 ## create tar archives for bare and ovz from the raw files tree
 package_tree(){
     if [ -z "$pkg" -o \
-        -z "$repo_local" -o \
         -z "$rem_repo" ]; then
         err "variables not defined."
         exit 1
+    fi
+    ## -- bare/kvm --
+    ## if no base tree was used fetch the tree to commit to the repo
+    if [ -z "$repo_path" ]; then
+        repo_path=$(./fetch-alp-tree.sh | tail -1)
+        repo_local="${PWD}/lrepo"
     fi
     mount_over $repo_local $repo_path
     ## commit tree to app branch
@@ -414,7 +427,7 @@ package_tree(){
 
     ## -- ovz --
     repo_local=$(./fetch-alp_ovz-tree.sh | tail -1)
-    ## commit tree to app branch
+    ## commit tree to app branch 
     rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
         --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
     ## skip csum comparison, if bare image is different so is ovz
