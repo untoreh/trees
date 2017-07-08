@@ -388,7 +388,9 @@ base_tree(){
         mount_over $pkg
     fi
     mount_hw $pkg
-    mkdir -p ${pkg}/var/cache/apk
+    cd $pkg
+    mkdir -p var/cache/apk usr/local/{bin,sbin} usr/{bin,sbin}
+    cd -
     alias crc="chroot $pkg"
 }
 
