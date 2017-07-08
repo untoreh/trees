@@ -12,7 +12,7 @@ hbc="http://mir7.ovh.net/ovh-applications/hubic/hubiC-Linux/2.1.0/hubiC-Linux-2.
 
 
 ## init tree
-base_tree
+base_tree none
 
 ## build app tree
 ## b2fuse b2(cli)
