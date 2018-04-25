@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-source functions.sh
+. ./functions.sh
 
 ## vars
 rem_repo="untoreh/trees"

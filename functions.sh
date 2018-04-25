@@ -215,12 +215,12 @@ export_stage(){
     hub release create -d -a ${pkg}_stage_${STAGE}.tgz -m "${pkg}_stage" ${pkg}_stage
 }
 
-## $1 repo 
+## $1 repo
 import_stage(){
     [ -z "$pkg" -o -z "$STAGE" -o -z "$1" ] && err "pkg, STAGE, or repo undefined, terminating" && exit 1
     PREV_STAGE=$((STAGE - 1))
     fetch_artifact ${1}:draft ${pkg}_stage_${PREV_STAGE}.tgz $PWD
-    source stage.env || cat stage.env | tail +2 > stage1.env && source stage1.env
+    . ./stage.env || cat stage.env | tail +2 > stage1.env && . ./stage1.env
 }
 
 ## $1 repo
@@ -355,7 +355,7 @@ wrap_rootfs() {
         mkdir -p  root sysroot srv tmp opt mnt home \
             var/log var/cache var/spool var/tmp
         ;;
-        *) 
+        *)
         for l in usr/etc,etc usr/lib,lib usr/lib,lib64 usr/bin,bin usr/sbin,sbin; do
             IFS=','
             set -- $l
@@ -429,7 +429,7 @@ package_tree(){
 
     ## -- ovz --
     repo_local=$(./fetch-alp_ovz-tree.sh | tail -1)
-    ## commit tree to app branch 
+    ## commit tree to app branch
     rev=$(ostree --repo=${repo_local} commit -s "$(date)-${pkg}-build" \
         --skip-if-unchanged --link-checkout-speedup -b ${pkg} ${pkg})
     ## skip csum comparison, if bare image is different so is ovz

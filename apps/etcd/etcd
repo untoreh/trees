@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source functions.sh
+. ./functions.sh
 
 rem_repo="untoreh/trees"
 repo_path=$(./fetch-alp-tree.sh | tail -1)

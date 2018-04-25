@@ -6,7 +6,7 @@ services:
 env:
 - STAGES=(1 2 3)
 install:
-- source travis-helper.sh
+- . ./travis-helper.sh
 - handle_build
 - env -0 | tr '\n' '\v' | tr '\0' '\n' | sed -r 's/\v/\\n/' >build.env
 - docker run -d --env-file build.env --name ct -v $PWD:/srv -v /dev:/dev -v /sys:/sys --privileged --cap-add=ALL -w /srv alpine /bin/sleep 36000

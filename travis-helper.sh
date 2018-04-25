@@ -1,7 +1,7 @@
 #!/bin/bash
 
 gem install travis
-source functions.sh
+. ./functions.sh
 user=untoreh
 appslist=appslist
 repo_rem=untoreh/trees

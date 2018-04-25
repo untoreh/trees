@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source functions.sh
+. ./functions.sh
 
 remote_repo="untoreh/trub"
 artifact="trub.tar"
@@ -11,7 +11,7 @@ ref="trunk"
 fetch_artifact $remote_repo /$artifact $dest_path
 
 ## trub is a delta, create the repo to apply the delta
-source repo.sh bare-user trub
+. ./repo.sh bare-user trub
 cmt=$(b64name $dest_path)
 ## apply the delta
 ostree --repo=${repo} static-delta apply-offline $dest_path/$cmt

@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-source functions.sh
+. ./functions.sh
 
 rem_repo="untoreh/trees"
 repo_path=$(./fetch-ubu-tree.sh | tail -1)
@@ -16,7 +16,7 @@ mount_hw $pkg
 alias crc="chroot $pkg"
 cp -a /etc/resolv.conf $pkg/etc/
 crc apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0x5a16e7281be7a449
-crc bash -c 'source /etc/os-release ; echo "deb http://dl.hhvm.com/ubuntu $UBUNTU_CODENAME main" > /etc/apt/sources.list.d/hhvm.list'
+crc bash -c '. /etc/os-release ; echo "deb http://dl.hhvm.com/ubuntu $UBUNTU_CODENAME main" > /etc/apt/sources.list.d/hhvm.list'
 crc apt update
 crc bash -c 'DEBIAN_FRONTEND=noninteractive apt install -y -q hhvm'
 crc apt-get clean

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source functions.sh
+. ./functions.sh
 
 cat << EOF >>/etc/apk/repositories
 http://dl-cdn.alpinelinux.org/alpine/edge/testing

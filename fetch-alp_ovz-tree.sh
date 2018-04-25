@@ -1,5 +1,5 @@
 #!/bin/sh
-source functions.sh
+. ./functions.sh
 
 alprepo="untoreh/pine"
 artifact="rootfs.pine_ovz.sq"

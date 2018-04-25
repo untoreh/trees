@@ -1,7 +1,7 @@
 #!/bin/sh
 
 export PKG=$1
-source functions.sh
+. ./functions.sh
 
 ## sanity
 if [ ! $PKG ]; then

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source functions.sh
+. ./functions.sh
 
 alprepo="untoreh/pine"
 artifact="image.pine.tgz"
