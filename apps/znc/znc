@@ -1,0 +1,19 @@
+#!/bin/bash
+
+. ./functions.sh
+
+rem_repo="untoreh/trees"
+ref="trunk"
+pkg="znc"
+
+## init tree
+base_tree alp_ovz
+
+## build app tree
+apkc ${pkg} add znc
+
+copy_image_cfg $pkg
+wrap_rootfs ${pkg} -c
+
+## pack the tree
+package_tree

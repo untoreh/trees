@@ -268,9 +268,8 @@ mount_over(){
     [ -z "$pkg" ] && return 1
     [ -z "$lodir" ] && lodir="${pkg}-lo"
     mkdir -p ${pkg} $lodir ${pkg}-wo ${pkg}-up
-    mount -t overlay \
-        -o lowerdir=$lodir,workdir=${pkg}-wo,upperdir=${pkg}-up \
-        none ${pkg} || ( err "overlay failed for $pkg" && exit 1 )
+    mount -t overlay -o lowerdir=$lodir,workdir=${pkg}-wo,upperdir=${pkg}-up none ${pkg} ||
+        { err "overlay failed for $pkg" && exit 1; }
 }
 
 ## $1 rootfs
@@ -384,7 +383,7 @@ base_tree(){
         repo_path=$(./fetch-${1:-alp}-tree.sh | tail -1)
         repo_local="${PWD}/lrepo"
         ostree checkout --repo=${repo_path} --union ${ref} ${pkg}-lo
-        ln -sr ${pkg}/usr/etc ${pkg}/etc
+        ln -sr ${pkg}/usr/etc ${pkg}/etc || mkdir -p ${pkg}/etc
         mount_over $pkg
     fi
     mount_hw $pkg
@@ -489,7 +488,7 @@ install_glib() {
     mount -o remount,ro /proc &>/dev/null
     ## GLIB
     GLIB_VERSION=$(last_version sgerrand/alpine-pkg-glibc)
-    wget -q -O $1/etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub
+    wget -q -O $1/etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub
     wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/$GLIB_VERSION/glibc-$GLIB_VERSION.apk
     if [ -n "$1" ]; then
         apk --root $1 add glibc-$GLIB_VERSION.apk
