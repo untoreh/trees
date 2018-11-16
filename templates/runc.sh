@@ -179,8 +179,8 @@ if [ -z "$BUNDLE" ]; then
 fi
 
 OCI_TEMPLATE_PATH=${OCI_TEMPLATE_PATH:-"/etc/runc.json"}
-curV=$(cat /etc/pine)
-apps_url="https://cdn.rawgit.com/untoreh/trees/master/appslist?v=${curV}"
+curV=${PINE:-pine-$(cat /etc/pine)}
+apps_url="https://gitcdn.xyz/repo/untoreh/trees/${curV}/appslist"
 listdir="$HOME/.cache/appslist"
 listfail="$HOME/.cache/appslist_fail"
 appslist="$(cat $listdir 2>/dev/null)"

@@ -3,4 +3,5 @@ hhvm:trub,1
 nginx:pine,2
 tidb:pine,1
 borg:pine,1
+znc:pine,1
 imageproxy:pine,1
