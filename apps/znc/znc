@@ -10,7 +10,7 @@ pkg="znc"
 base_tree alp_ovz
 
 ## build app tree
-apkc ${pkg} add znc
+apkc ${pkg} add ca-certificates znc znc-extra
 
 copy_image_cfg $pkg
 wrap_rootfs ${pkg} -c

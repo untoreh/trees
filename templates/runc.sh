@@ -15,6 +15,7 @@ DETACH=
 runvar=
 name=
 nnkr="--no-new-keyring"
+nopivot="--no-pivot"
 while [[ $# -gt 0 ]]; do
 	key="$1"
 	case $key in
@@ -52,7 +53,7 @@ while [[ $# -gt 0 ]]; do
 			;;
 		run)
 			runvar=true
-			ARGS="$ARGS $nnkr"
+			ARGS="$ARGS $nnkr $nopivot"
 			;;
 		create)
 			runvar=true
@@ -109,7 +110,9 @@ if [ -n "$ENTER" -a -n "$name" ]; then
 	. /proc/cmdline
 	nsargs=
 	CT="/var/run/runc.d/${name}"
-	CT_PID=$(cat ${CT}/proc.pid)
+  [ -e ${CT}/proc.pid ] &&
+      CT_PID=$(<${CT}/proc.pid) ||
+          CT_PID=$(sed -r 's/.*init_process_pid":([^,]*).*/\1/' < /run/runc/${name}/state.json)
 	for n in $(ls /proc/${CT_PID}/ns); do
 		nsargs="$nsargs -${n:0:1}"
 	done
@@ -228,7 +231,7 @@ if [ -z "$bundle_found" ]; then
 fi
 
 ## mount cgroups if not mounted
-if ! mountpoint -q /sys/fs/cgroup/cpu,cpuacct,cpuset; then
+if ! mountpoint -q /sys/fs/cgroup/cpu,cpuacct,cpuset && grep ^2 < <(uname -r); then
 	printdb "mounting cgroups.."
 	mkdir /sys/fs/cgroup/freezer,devices
 	mount -t cgroup cgroup /sys/fs/cgroup/freezer,devices -o freezer,devices
@@ -264,12 +267,12 @@ if [ -z "$SKIP_OCI_CONFIG" ]; then
 	printdb "generating container config.."
 	eval "oci-runtime-tool generate --template $OCI_TEMPLATE_PATH  \
 		--hostname ${RUNC_IMAGE_NAME}${NODE} \
-		--masked-paths /image.conf \
-		--masked-paths /image.env \
-		--masked-paths /prestart.sh \
-		--masked-paths /poststart.sh \
-		--masked-paths /poststop.sh \
-		--tty=$TTY \
+		--linux-masked-paths /image.conf \
+		--linux-masked-paths /image.env \
+		--linux-masked-paths /prestart.sh \
+		--linux-masked-paths /poststart.sh \
+		--linux-masked-paths /poststop.sh \
+		--process-terminal=$TTY \
 		$RUNC_IMAGE_CONFIG" |  \
 		grep -Ev "CAP_SYSLOG|CAP_WAKE_ALARM|CAP_BLOCK_SUSPEND|CAP_AUDIT_READ" | \
 		sed -r 's/(CAP_MAC_ADMIN"),/\1/' \
