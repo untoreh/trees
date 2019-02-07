@@ -194,7 +194,7 @@ bundle_found=$([ -d $BUNDLE ] && echo "yes")
 if [ -z "$appslist" ]; then
 	mkdir -p $HOME/.cache
 	printdb "downloading apps list.."
-	fetch_artifact $apps_url - >$listdir
+	fetch_artifact $apps_url - > $listdir
 fi
 
 ## check app name
